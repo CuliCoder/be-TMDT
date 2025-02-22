@@ -23,7 +23,7 @@ export const getOrders = () =>
     new Promise(async(resolve, reject) => {
         try {
             const query  = 
-            `SELECT * FROM orders WHERE`;
+            `SELECT * FROM orders`;
             const result = await database.execute(query);
             resolve(result);
         } catch (error) {  
