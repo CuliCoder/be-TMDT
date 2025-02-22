@@ -5,7 +5,11 @@ import { fileURLToPath } from "url";
 import auth_route from "./routes/auth.js";
 import "dotenv/config";
 import cors from "cors";
+<<<<<<< HEAD
 import pr_Route from "./routes/productRoute.js"; 
+=======
+import customer_route from "./routes/customerRoute.js";
+>>>>>>> 229a0ac04e534c35b75123451e087ea6819fd01c
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors(
@@ -32,8 +36,12 @@ connection.getConnection((err) => {
   console.log("Kết nối cơ sở dữ liệu thành công!");
 });
 app.use("/auth", auth_route);
+<<<<<<< HEAD
 app.get("/", (req, res) => res.send("Server hoạt động!"));
 
+=======
+app.use("/customers",customer_route);
+>>>>>>> 229a0ac04e534c35b75123451e087ea6819fd01c
 app.listen(3000, () => {
   console.log("Server đang chạy tại http://localhost:3000");
 });
