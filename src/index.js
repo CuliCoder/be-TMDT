@@ -3,6 +3,7 @@ import path from "path";
 import connection from "./database/database.js";
 import { fileURLToPath } from "url";
 import auth_route from "./routes/auth.js";
+import router from "./routes/api.js";
 import "dotenv/config";
 import cors from "cors";
 const app = express();
@@ -28,7 +29,7 @@ connection.getConnection((err) => {
   console.log("Kết nối cơ sở dữ liệu thành công!");
 });
 app.use("/auth", auth_route);
-
+app.use("/api", router);
 app.listen(3000, () => {
   console.log("Server đang chạy tại http://localhost:3000");
 });
