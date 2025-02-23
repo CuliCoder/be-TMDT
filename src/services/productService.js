@@ -1,0 +1,102 @@
+import database from "../database/database.js";
+
+// Lấy danh sách tất cả sản phẩm
+export const getAllProducts = async () => {
+  try {
+    const [rows] = await database.execute("SELECT * FROM products");
+    return rows;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Lấy thông tin chi tiết một sản phẩm theo ID
+export const getProductById = async (id) => {
+  try {
+    const [rows] = await database.execute("SELECT * FROM products WHERE ProductId = ?", [id]);
+    return rows.length > 0 ? rows[0] : null;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Thêm sản phẩm mới
+export const createProduct = async (productData) => {
+  try {
+      const { ProductName, Description, Price, Brand, StockQuantity, screen_size, screen_technology, rear_camera, front_camera, Chipset, RAM_capacit, internal_storage, pin, SIM_card, OS, screen_resolution, screen_features } = productData;
+      
+      // Kiểm tra xem có giá trị nào bị undefined không
+      if (!ProductName || !Price || !Brand || StockQuantity === undefined) {
+          throw new Error("Thiếu dữ liệu cần thiết! Hãy kiểm tra lại thông tin sản phẩm.");
+      }
+
+      const query = `
+          INSERT INTO products 
+          (ProductName, Description, Price, Brand, StockQuantity, screen_size, screen_technology, rear_camera, front_camera, Chipset, RAM_capacit, internal_storage, pin, SIM_card, OS, screen_resolution, screen_features) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      const [result] = await database.execute(query, [
+          ProductName, Description || null, Price, Brand, StockQuantity, screen_size || null, screen_technology || null, rear_camera || null, front_camera || null, Chipset || null, RAM_capacit || null, internal_storage || null, pin || null, SIM_card || null, OS || null, screen_resolution || null, screen_features || null
+      ]);
+
+      return { id: result.insertId, ...productData };
+
+  } catch (error) {
+      throw error;
+  }
+};
+
+// Cập nhật thông tin sản phẩm theo ID
+export const updateProduct = async (id, productData) => {
+  try {
+    // Kiểm tra nếu ID không hợp lệ
+    if (!id) {
+      throw new Error("ID sản phẩm không hợp lệ");
+    }
+
+    // Kiểm tra xem sản phẩm có tồn tại không
+    const [existingProduct] = await database.execute(
+      "SELECT * FROM products WHERE ProductID = ?",
+      [id]
+    );
+
+    if (existingProduct.length === 0) {
+      return null; // Không tìm thấy sản phẩm
+    }
+
+    // Lấy danh sách các cột trong bảng
+    const [columns] = await database.execute("SHOW COLUMNS FROM products");
+    const columnNames = columns.map((col) => col.Field);
+
+    // Lọc ra các trường hợp lệ trong productData
+    const updateFields = Object.keys(productData).filter((key) => columnNames.includes(key));
+
+    if (updateFields.length === 0) {
+      throw new Error("Không có dữ liệu hợp lệ để cập nhật");
+    }
+
+    // Tạo danh sách các trường cần cập nhật
+    const updateQuery = updateFields.map((field) => `${field} = ?`).join(", ");
+    const values = updateFields.map((field) => productData[field] ?? null); // Tránh undefined
+
+    // Thực hiện truy vấn UPDATE
+    const query = `UPDATE products SET ${updateQuery} WHERE ProductID = ?`;
+    const [result] = await database.execute(query, [...values, id]);
+
+    return result.affectedRows > 0 ? { id, ...productData } : null;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+// Xóa sản phẩm theo ID
+export const deleteProduct = async (id) => {
+  try {
+    const [result] = await database.execute("DELETE FROM products WHERE productid = ?", [id]);
+    return result.affectedRows > 0;
+  } catch (error) {
+    throw error;
+  }
+};
