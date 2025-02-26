@@ -36,14 +36,30 @@ export const updateCustomer = async (req, res) => {
         return res.status(500).json({ message: "Lỗi server!" });
     }
 };
-
 export const deleteCustomer = async (req, res) => {
     try {
-        const {id} = req.params;
+        const id = req.params.id;
+        if (!id) {
+            return res.status(400).json({ message: "Thiếu ID khách hàng!" });
+        }
         const result = await cus.deleteCustomer(id);
-        return res.status(200).json(result);
+        return res.json({ message: "Xóa thành công!", result });
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({ message: 'Xóa khách hàng thất bại' , error:error.message});
+        console.error("Lỗi deleteCustomer:", error);
+        return res.status(500).json({ message: "Lỗi server!" });
+    }
+}
+export const statusCustomer = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const status = req.body.status;
+        if (!id) {
+            return res.status(400).json({ message: "Thiếu ID khách hàng!" });
+        }
+        const result = await cus.statusCustomer(id, status);
+        return res.json({ message: "Cập nhật trạng thái thành công!", result });
+    } catch (error) {
+        console.error("Lỗi statusCustomer:", error);
+        return res.status(500).json({ message: "Lỗi server!" });
     }
 }
