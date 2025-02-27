@@ -8,6 +8,8 @@ import "dotenv/config";
 import cors from "cors";
 import pr_Route from "./routes/productRoute.js"; 
 import customer_route from "./routes/customerRoute.js";
+import od_Route from "./routes/ordersRoute.js";
+import orderdetail_route from "./routes/orderDetailRoute.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors(
@@ -34,6 +36,8 @@ connection.getConnection((err) => {
   console.log("Kết nối cơ sở dữ liệu thành công!");
 });
 app.use("/auth", auth_route);
+app.use("/orders", od_Route);
+app.use("/orderdetail", orderdetail_route);
 app.use("/api", router);
 app.get("/", (req, res) => res.send("Server hoạt động!"));
 

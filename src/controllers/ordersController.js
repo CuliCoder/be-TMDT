@@ -1,5 +1,6 @@
 import * as od from '../services/ordersService.js';
 import * as oddt from '../services/orderDetailService.js';
+import * as product from '../services/productService.js';
 
 export const addOrder = async (req, res) => 
 {
@@ -9,6 +10,11 @@ export const addOrder = async (req, res) =>
         for (const item of OrderDetail){
             const addODDetail = 
             await oddt.addOrderDetail(addOD.dataValues.OrderID, item.ProductID, item.Quantity, item.Price);
+            const productUpdate = await product.getProductById(item.ProductID);
+            const dataProduct = {
+                StockQuantity: item.Quantity - productUpdate.Quantity
+            }
+            await product.updateProduct(item.ProductID, dataProduct);
         }
         return res.status(200).json({ message: 'Thêm hóa đơn thành công' });
     } catch (error) {
@@ -33,5 +39,14 @@ export const getOrderByID = async (req, res) => {
         return res.status(200).json(result)
     } catch (error) {
         return res.status(500).json({ message: 'Lấy Orders theo ID thất bại'})
+    }
+}
+export const getOrderByUserID = async (req, res) => {
+    try {
+        const UserID = req.params.id;
+        const result = await od.getOrderByUserID(UserID);
+        return res.status(200).json(result)
+    } catch (error) {
+        return res.status(500).json({ message: 'Lấy Orders theo UserID thất bại'})
     }
 }
