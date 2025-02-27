@@ -42,7 +42,7 @@ app.use("/api", router);
 app.get("/", (req, res) => res.send("Server hoạt động!"));
 
 
-app.use("/customers",customer_route);
+app.use("/api/customers",customer_route);
 
 app.listen(3000, () => {
   console.log("Server đang chạy tại http://localhost:3000");
