@@ -23,22 +23,42 @@ export const getProductById = async (id) => {
 // Thêm sản phẩm mới
 export const createProduct = async (productData) => {
   try {
-      const { ProductName, Description, Price, Brand, StockQuantity, screen_size, screen_technology, rear_camera, front_camera, Chipset, RAM_capacit, internal_storage, pin, SIM_card, OS, screen_resolution, screen_features } = productData;
+    const {
+      ProductName, Description, Price_show, Price_origin, Brand, StockQuantity,
+      screen_size, screen_technology, rear_camera, front_camera,
+      Chipset, RAM_capacit, internal_storage, pin, SIM_card, OS,
+      screen_resolution, screen_features
+  } = productData;
       
       // Kiểm tra xem có giá trị nào bị undefined không
-      if (!ProductName || !Price || !Brand || StockQuantity === undefined) {
-          throw new Error("Thiếu dữ liệu cần thiết! Hãy kiểm tra lại thông tin sản phẩm.");
+      if (!ProductName || Price_show == null || Price_origin == null) {
+        throw new Error("Thiếu dữ liệu cần thiết! Hãy kiểm tra lại thông tin sản phẩm.");
+      }
+    
+      // Chuyển đổi kiểu dữ liệu
+      const priceShow = parseFloat(Price_show);
+      const priceOrigin = parseFloat(Price_origin);
+      const stockQuantity = parseInt(StockQuantity, 10);
+
+      if (isNaN(priceShow) || isNaN(priceOrigin) || isNaN(stockQuantity)) {
+          throw new Error("Dữ liệu không hợp lệ! Giá hoặc số lượng phải là số.");
       }
 
-      const query = `
-          INSERT INTO products 
-          (ProductName, Description, Price, Brand, StockQuantity, screen_size, screen_technology, rear_camera, front_camera, Chipset, RAM_capacit, internal_storage, pin, SIM_card, OS, screen_resolution, screen_features) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `;
-
-      const [result] = await database.execute(query, [
-          ProductName, Description || null, Price, Brand, StockQuantity, screen_size || null, screen_technology || null, rear_camera || null, front_camera || null, Chipset || null, RAM_capacit || null, internal_storage || null, pin || null, SIM_card || null, OS || null, screen_resolution || null, screen_features || null
-      ]);
+        const query = `
+            INSERT INTO products
+            (ProductName, Description, Price_show, Price_origin, Brand, StockQuantity, 
+            screen_size, screen_technology, rear_camera, front_camera, Chipset, 
+            RAM_capacit, internal_storage, pin, SIM_card, OS, screen_resolution, screen_features) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        
+        const [result] = await database.execute(query, [
+            ProductName || null, Description || null, Price_show || null, Price_origin || null, 
+            Brand || null, StockQuantity || null, screen_size || null, screen_technology || null, 
+            rear_camera || null, front_camera || null, Chipset || null, RAM_capacit || null, 
+            internal_storage || null, pin || null, SIM_card || null, OS || null, 
+            screen_resolution || null, screen_features || null
+        ]);
 
       return { id: result.insertId, ...productData };
 

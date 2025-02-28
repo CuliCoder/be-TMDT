@@ -9,11 +9,15 @@ import cors from "cors";
 import pr_Route from "./routes/productRoute.js"; 
 import customer_route from "./routes/customerRoute.js";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import od_Route from "./routes/ordersRoute.js";
 import orderdetail_route from "./routes/orderDetailRoute.js";
 =======
 import pr_Route from "./routes/productRoute.js"; 
 >>>>>>> b60f829 (Lưu thay đổi của tôi trong src/index.js)
+=======
+import image_route from "./routes/imageRoute.js";
+>>>>>>> 4595a84 (Cập nhật thêm backend Images)
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors(
@@ -30,7 +34,6 @@ app.use(express.static(path.join(__dirname, "../public")));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-app.use("/products", pr_Route);
 // Kết nối với cơ sở dữ liệu
 connection.getConnection((err) => {
   if (err) {
@@ -51,9 +54,14 @@ app.use("/api/customers",customer_route);
 
 =======
 app.use("/customers",customer_route);
+<<<<<<< HEAD
 app.get("/", (req, res) => res.send("Server hoạt động!"));
 
 >>>>>>> b60f829 (Lưu thay đổi của tôi trong src/index.js)
+=======
+app.use("/products", pr_Route);
+app.use("/images", image_route);
+>>>>>>> 4595a84 (Cập nhật thêm backend Images)
 app.listen(3000, () => {
   console.log("Server đang chạy tại http://localhost:3000");
 });
