@@ -5,14 +5,19 @@ import * as product from '../services/productService.js';
 export const addOrder = async (req, res) => 
 {
     try {
-        const {userid, totalAmount, OrderDetail} = req.body;
-        const addOD = await od.addOrder(userid, totalAmount);
+        const userid = req.body.UserID;
+        const totalAmount = req.body.TotalAmount;
+        const OrderDetail = req.body.detailOrder;
+        if (!userid || !totalAmount || !Array.isArray(OrderDetail)) {
+            return res.status(400).json({ message: 'Thiếu dữ liệu cần thiết hoặc dữ liệu không hợp lệ' });
+        }
+        const addOD = await od.addOrder(userid, totalAmount)
         for (const item of OrderDetail){
-            const addODDetail = 
-            await oddt.addOrderDetail(addOD.dataValues.OrderID, item.ProductID, item.Quantity, item.Price);
+            await oddt.addOrderDetail(addOD, item.ProductID, item.Quantity, item.Price);
             const productUpdate = await product.getProductById(item.ProductID);
+            console.log(productUpdate);
             const dataProduct = {
-                StockQuantity: item.Quantity - productUpdate.Quantity
+                StockQuantity: productUpdate.StockQuantity - item.Quantity
             }
             await product.updateProduct(item.ProductID, dataProduct);
         }
