@@ -60,3 +60,13 @@ export const getOrderByDate = async (startDate, endDate) => {
         throw error;
     }
 };
+export const updateOrderStatus = async (OrderID, status) => {
+    try {
+        const query = `UPDATE orders SET Status = ? WHERE OrderID = ?`;
+        const [result] = await database.execute(query, [status, OrderID]);
+        return result.affectedRows;
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        throw error;
+    }
+}
