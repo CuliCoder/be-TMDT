@@ -8,6 +8,7 @@ import "dotenv/config";
 import cors from "cors";
 import pr_Route from "./routes/productRoute.js"; 
 import customer_route from "./routes/customerRoute.js";
+import supplier_route from "./routes/supplierRoute.js"
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors(
@@ -37,9 +38,8 @@ app.use("/auth", auth_route);
 app.use("/api", router);
 app.get("/", (req, res) => res.send("Server hoạt động!"));
 
-
 app.use("/api/customers",customer_route);
-
+app.use("/api/suppliers",supplier_route);
 app.listen(3000, () => {
   console.log("Server đang chạy tại http://localhost:3000");
 });
