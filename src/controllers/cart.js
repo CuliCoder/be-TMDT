@@ -16,8 +16,8 @@ export const addToCart = async (req, res) => {
     const userID = req.body.userID;
     const productID = req.body.productID;
     const quantity = req.body.quantity;
-    const res = await cartService.addToCart(userID, productID, quantity);
-    return res.status(200).json(res);
+    const result = await cartService.addToCart(userID, productID, quantity);
+    return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({
       error: 1,
@@ -30,8 +30,8 @@ export const updateCart = async (req, res) => {
     const userID = req.body.userID;
     const productID = req.body.productID;
     const quantity = req.body.quantity;
-    const res = await cartService.updateCart(userID, productID, quantity);
-    return res.status(200).json(res);
+    const result = await cartService.updateCart(userID, productID, quantity);
+    return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({
       error: 1,
@@ -41,14 +41,14 @@ export const updateCart = async (req, res) => {
 };
 export const removeFromCart = async (req, res) => {
   try {
-    const userID = req.body.userID;
-    const productID = req.body.productID;
-    const res = await cartService.removeFromCart(userID, productID);
-    return res.status(200).json(res);
+    const userID = req.query.userID;
+    const productID = req.query.productID;
+    const result = await cartService.removeFromCart(userID, productID);
+    return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({
       error: 1,
-      message: "Lỗi server",
+      message: "Lỗi server" + error,
     });
   }
 };

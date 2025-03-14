@@ -8,6 +8,9 @@ import "dotenv/config";
 import cors from "cors";
 import pr_Route from "./routes/productRoute.js"; 
 import customer_route from "./routes/customerRoute.js";
+import od_Route from "./routes/ordersRoute.js";
+import orderdetail_route from "./routes/orderDetailRoute.js";
+import image_route from "./routes/imageRoute.js";
 import supplier_route from "./routes/supplierRoute.js"
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,7 +28,6 @@ app.use(express.static(path.join(__dirname, "../public")));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-app.use("/products", pr_Route);
 // Kết nối với cơ sở dữ liệu
 connection.getConnection((err) => {
   if (err) {
@@ -35,10 +37,13 @@ connection.getConnection((err) => {
   console.log("Kết nối cơ sở dữ liệu thành công!");
 });
 app.use("/auth", auth_route);
+app.use("/orders", od_Route);
+app.use("/orderdetail", orderdetail_route);
 app.use("/api", router);
 app.get("/", (req, res) => res.send("Server hoạt động!"));
-
 app.use("/api/customers",customer_route);
+app.use("/products", pr_Route);
+app.use("/images", image_route);
 app.use("/api/suppliers",supplier_route);
 app.listen(3000, () => {
   console.log("Server đang chạy tại http://localhost:3000");

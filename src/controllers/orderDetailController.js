@@ -1,8 +1,8 @@
-import * as oddt from '../services/orderDetailService';
+import * as oddt from '../services/orderDetailService.js';
 
 export const getOrderDetail = async (req, res) => {
     try {
-        const OrderID = req.params;
+        const OrderID = req.params.id;
         const result = await oddt.getOrderDetail(OrderID);
         return res.status(200).json(result)
     } catch (error) {

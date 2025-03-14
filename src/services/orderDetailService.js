@@ -12,7 +12,7 @@ export const addOrderDetail = (OrderID, ProductID, Quantity, Price) =>
                     Quantity,
                     Price,
                 ]
-            ); 
+            );
             resolve(result);     
         } catch (error) {
             reject(error);
@@ -22,7 +22,8 @@ export const getOrderDetail = (OrderID) =>
     new Promise(async(resolve, reject) => {
         try {
             const query = 
-            `SELECT * FROM orderdetail WHERE OrderID = ?`;
+            `SELECT * FROM orderdetails WHERE OrderID = ?`;
+            OrderID = Number(OrderID);
             const result = await database.execute(query, [OrderID]);
             resolve(result);
         } catch (error) {
