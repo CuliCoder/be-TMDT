@@ -41,7 +41,7 @@ app.use("/orderdetail", orderdetail_route);
 app.use("/api", router);
 app.get("/", (req, res) => res.send("Server hoạt động!"));
 app.use("/api/customers",customer_route);
-app.use("/products", pr_Route);
+app.use("/product", pr_Route);
 app.use("/images", image_route);
 app.listen(3000, () => {
   console.log("Server đang chạy tại http://localhost:3000");

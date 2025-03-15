@@ -10,7 +10,6 @@ export const getProducts = async (req, res) => {
     res.status(500).json({ message: "Lỗi lấy danh sách sản phẩm", error: error.message });
   }
 };
-
 // Lấy chi tiết một sản phẩm
 export const getProduct = async (req, res) => {
   try {
@@ -24,7 +23,29 @@ export const getProduct = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi khi lấy sản phẩm", error: error.message });
   }
 };
-
+export const get_product_item = async (req, res) => {
+  try {
+    const product = await productService.get_product_item(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy sản phẩm" });
+    }
+    return res.status(200).json({ success: true, data: product });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Lỗi khi lấy sản phẩm", error: error.message });
+  }
+}
+export const get_product_item_all = async (req, res) => {
+  try {
+    const product = await productService.get_product_item_all();
+    console.log(product)
+    // if (!product) {
+    //   return res.status(404).json({ success: false, message: "Không tìm thấy sản phẩm" });
+    // }
+    return res.status(200).json({ success: true, data: product });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Lỗi khi lấy sản phẩm", error: error.message });
+  }
+}
 // Tạo sản phẩm mới
 export const createProduct = async (req, res) => {
   try {
