@@ -11,6 +11,7 @@ import customer_route from "./routes/customerRoute.js";
 import od_Route from "./routes/ordersRoute.js";
 import orderdetail_route from "./routes/orderDetailRoute.js";
 import image_route from "./routes/imageRoute.js";
+import supplier_route from "./routes/supplierRoute.js"
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors(
@@ -43,6 +44,7 @@ app.get("/", (req, res) => res.send("Server hoạt động!"));
 app.use("/api/customers",customer_route);
 app.use("/product", pr_Route);
 app.use("/images", image_route);
+app.use("/api/suppliers",supplier_route);
 app.listen(3000, () => {
   console.log("Server đang chạy tại http://localhost:3000");
 });

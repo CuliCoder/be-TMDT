@@ -49,17 +49,17 @@ export const deleteCustomer = async (req, res) => {
         return res.status(500).json({ message: "Lỗi server!" });
     }
 }
-export const statusCustomer = async (req, res) => {
-    try {
-        const id = req.params.id;
-        const status = req.body.status;
-        if (!id) {
-            return res.status(400).json({ message: "Thiếu ID khách hàng!" });
+    export const statusCustomer = async (req, res) => {
+        try {
+            const id = req.params.id;
+            const status = req.body.status;
+            if (!id) {
+                return res.status(400).json({ message: "Thiếu ID khách hàng!" });
+            }
+            const result = await cus.statusCustomer(id, status);
+            return res.json({ message: "Cập nhật trạng thái thành công!", result });
+        } catch (error) {
+            console.error("Lỗi statusCustomer:", error);
+            return res.status(500).json({ message: "Lỗi server!" });
         }
-        const result = await cus.statusCustomer(id, status);
-        return res.json({ message: "Cập nhật trạng thái thành công!", result });
-    } catch (error) {
-        console.error("Lỗi statusCustomer:", error);
-        return res.status(500).json({ message: "Lỗi server!" });
     }
-}

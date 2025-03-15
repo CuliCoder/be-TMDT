@@ -60,10 +60,7 @@ export const get_product_item_all = () =>
 // Lấy thông tin chi tiết một sản phẩm theo ID
 export const getProductById = async (id) => {
   try {
-    const [rows] = await database.execute(
-      "SELECT * FROM products WHERE ProductId = ?",
-      [id]
-    );
+    const [rows] = await database.execute("SELECT * FROM products WHERE ProductID = ?", [id]);
     return rows.length > 0 ? rows[0] : null;
   } catch (error) {
     throw error;
