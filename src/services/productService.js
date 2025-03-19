@@ -4,7 +4,7 @@ import database from "../database/database.js";
 export const getAllProducts = async () => {
   try {
     const [rows] = await database.execute(
-      "SELECT pr.*, ca.CategoryName FROM products as pr join categories as ca on pr.category_id = ca.CategoryID"
+      "SELECT pr.*, ca.CategoryName FROM products as pr join categories as ca on pr.category_id = ca.CategoryID where pr.status = 1"
     );
     return rows;
   } catch (error) {
@@ -30,7 +30,7 @@ JOIN variation_opt AS opt
   ON con.variation_option_id = opt.id 
 JOIN variation AS va 
   ON opt.variationID = va.VariantID 
-WHERE it.id = ?
+WHERE it.id = ? and it.status = 1
 GROUP BY it.id;`,
         [id]
       );
@@ -59,7 +59,7 @@ JOIN variation_opt AS opt
   ON con.variation_option_id = opt.id 
 JOIN variation AS va 
   ON opt.variationID = va.VariantID 
-WHERE it.product_id = ?
+WHERE it.product_id = ? and it.status = 1
 GROUP BY it.id;`,
         [id]
       );
@@ -79,6 +79,7 @@ export const get_product_item_all = () =>
       on it.id = con.product_item_id join variation_opt as opt 
       on con.variation_option_id = opt.id join variation as va 
       on opt.variationID = va.VariantID
+      where it.status = 1
       group by it.id
       `
       );
@@ -96,7 +97,7 @@ export const add_product_item = (data, imagePath) =>
   new Promise(async (resolve, reject) => {
     try {
       const [checkSKU] = await database.query(
-        `SELECT * FROM product_item WHERE sku = ?`,
+        `SELECT * FROM product_item WHERE sku = ? and status = 1`,
         [data.sku]
       );
       if (checkSKU.length !== 0) {
@@ -163,7 +164,7 @@ export const edit_product_item = (data, imagePath) =>
   new Promise(async (resolve, reject) => {
     try {
       const [checkSKU] = await database.query(
-        `SELECT * FROM product_item WHERE sku = ? and id != ?`,
+        `SELECT * FROM product_item WHERE sku = ? and id != ? and status = 1`,
         [data.sku, data.product_item_id]
       );
       if (checkSKU.length !== 0) {
@@ -270,7 +271,7 @@ export const getProductById = (id) =>
   new Promise(async (resolve, reject) => {
     try {
       const [rows] = await database.execute(
-        "SELECT * FROM products WHERE ProductID = ?",
+        "SELECT * FROM products WHERE ProductID = ? and status = 1",
         [id]
       );
       resolve(rows[0]);
@@ -349,3 +350,46 @@ export const add_attribute = (category_id, name) =>
       });
     }
   });
+export const delete_product_item = (id) =>
+  new Promise(async (resolve, reject) => {
+    try {
+      const [delete_product_item] = await database.execute(
+        `update product_item set status = 0 where id = ?`,
+        [id]
+      );
+      resolve({
+        error: delete_product_item.affectedRows === 0 ? 1 : 0,
+        message:
+          delete_product_item.affectedRows === 0
+            ? "Xóa sản phẩm thất bại"
+            : "Xóa sản phẩm thành công",
+      });
+    } catch (error) {
+      reject({
+        error: 1,
+        message: "Xóa sản phẩm thất bại",
+        error: error.message,
+      });
+    }
+  });
+  export const delete_product = (id) => new Promise(async (resolve, reject) => {
+    try {
+      const [delete_product] = await database.execute(
+        `update products set status = 0 where ProductID = ?`,
+        [id]
+      );
+      resolve({
+        error: delete_product.affectedRows === 0 ? 1 : 0,
+        message:
+          delete_product.affectedRows === 0
+            ? "Xóa sản phẩm thất bại"
+            : "Xóa sản phẩm thành công",
+      });
+    } catch (error) {
+      reject({
+        error: 1,
+        message: "Xóa sản phẩm thất bại",
+        error: error.message,
+      });
+    }
+  })

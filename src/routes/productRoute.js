@@ -28,6 +28,8 @@ pr_Route.put("/update_product_item", upload.single('image'), pr.update_product_i
 pr_Route.post("/add_product", upload.single('image'), pr.add_product);
 pr_Route.put("/update_product", upload.single('image'), pr.update_product);
 pr_Route.get("/get_product_by_productID/:id", pr.get_product_by_productID);
+pr_Route.delete("/delete_product_item/:id", pr.delete_product_item);
+pr_Route.delete("/delete_product/:id", pr.delete_product);
 pr_Route.get("/categoryByProductID/:id", async (req, res) => {
   try {
     const [categories] = await database.execute(`SELECT CategoryID from categories as ca 

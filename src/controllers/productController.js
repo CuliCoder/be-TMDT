@@ -190,3 +190,31 @@ export const add_attribute = async (req, res) => {
     return res.status(500).json(error);
   }
 };
+export const delete_product_item = async (req, res) => {
+  try {
+    if (!req.params.id) {
+      return res.status(400).json({
+        error: 1,
+        message: "Vui lòng nhập đủ thông tin",
+      });
+    }
+    const result = await productService.delete_product_item(req.params.id);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+}
+export const delete_product = async (req, res) => {
+  try {
+    if (!req.params.id) {
+      return res.status(400).json({
+        error: 1,
+        message: "Vui lòng nhập đủ thông tin",
+      });
+    }
+    const result = await productService.delete_product(req.params.id);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+}
