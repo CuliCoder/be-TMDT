@@ -23,13 +23,13 @@ export const getCustomerById = async (req, res) => {
 export const updateCustomer = async (req, res) => { 
     try {
         const id = req.params.id;
-        const { username, password, fullname, email, phonenumber } = req.body;
+        const { Username, FullName, Email, PhoneNumber } = req.body;
 
-        if (!id) {
-            return res.status(400).json({ message: "Thiếu ID khách hàng!" });
+        if (!id || !Username || !Email || !PhoneNumber) {
+            return res.status(400).json({ message: "Thiếu dữ liệu cần thiết!" });
         }
-
-        const result = await cus.updateCustomer(id, username, password, email, fullname, phonenumber);
+    
+        const result = await cus.updateCustomer(id, Username, Email, FullName, PhoneNumber);
         return res.json({ message: "Cập nhật thành công!", result });
     } catch (error) {
         console.error("Lỗi updateCustomer:", error);
@@ -52,7 +52,7 @@ export const deleteCustomer = async (req, res) => {
     export const statusCustomer = async (req, res) => {
         try {
             const id = req.params.id;
-            const status = req.body.status;
+            const {status} = req.body;
             if (!id) {
                 return res.status(400).json({ message: "Thiếu ID khách hàng!" });
             }
