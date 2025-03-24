@@ -24,7 +24,7 @@ export const register = (fullname, username, email, phonenumber, password) =>
 export const login = (username, password) =>
   new Promise(async (resolve, reject) => {
     try {
-      const query = `SELECT * FROM users WHERE username = ?`;
+      const query = `SELECT * FROM users WHERE username = ? and status = 1`;
       const [users, fields] = await database.execute(query, [username]);
       if (users.length === 0) {
         reject({

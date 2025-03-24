@@ -5,7 +5,7 @@ export const addOrder = async (userid, totalAmount) => {
         const query = `INSERT INTO orders (UserID, OrderDate, TotalAmount, Status) VALUES (?, ?, ?, ?)`;
         const currentTime = new Date().toISOString().slice(0, 19).replace("T", " "); // Chuyển sang định dạng MySQL DATETIME
         const [result] = await database.execute(query, [userid, currentTime, totalAmount, 1]);
-        return result;
+        return result.insertId;
     } catch (error) {
         console.error("Error adding order:", error);
         throw error;
@@ -60,4 +60,15 @@ export const getOrderByDate = async (startDate, endDate) => {
         throw error;
     }
 };
+
+export const updateOrderStatus = async (OrderID, status) => {
+    try {
+        const query = `UPDATE orders SET Status = ? WHERE OrderID = ?`;
+        const [result] = await database.execute(query, [status, OrderID]);
+        return result.affectedRows;
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        throw error;
+    }
+}
 
