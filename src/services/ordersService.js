@@ -10,7 +10,6 @@ export const addOrder = async (userid, totalAmount) => {
         console.error("Error adding order:", error);
         throw error;
     }
-<<<<<<< HEAD
 };
 
 export const getOrders = async () => {
@@ -61,39 +60,4 @@ export const getOrderByDate = async (startDate, endDate) => {
         throw error;
     }
 };
-=======
-});
-export const getOrders = () =>
-    new Promise(async(resolve, reject) => {
-        try {
-            const query  = 
-            `SELECT * FROM orders`;
-            const result = await database.execute(query);
-            resolve(result);
-        } catch (error) {  
-            reject(error);         
-        }
-    })
-export const getOrderByID = (OrderID) =>
-    new Promise(async(resolve, reject) => {
-        try {
-            const query = 
-            `SELECT * FROM orders WHERE OrderID = ?`;
-            const result = await database.execute(query, [OrderID]);
-            resolve(result);
-        } catch (error) {
-            reject(error);
-        }
-    })
-// export const getOrderbyDate = (startDate, endDate) => 
-//     new Promise(async(resolve, reject) => {
-//         try {
-//             const query =
-//             `SELECT * FROM orders WHERE (OrderDate BETWEEN ? AND ?)`;
-//             const result = await database.execute(query, [startDate, endDate]);
-//             resolve(result);
-//         } catch (error) {
-//             reject(error)
-//         }
-//     })
->>>>>>> b60f829 (Lưu thay đổi của tôi trong src/index.js)
+

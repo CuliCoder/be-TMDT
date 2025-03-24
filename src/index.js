@@ -6,18 +6,11 @@ import auth_route from "./routes/auth.js";
 import router from "./routes/api.js";
 import "dotenv/config";
 import cors from "cors";
-import pr_Route from "./routes/productRoute.js"; 
 import customer_route from "./routes/customerRoute.js";
-<<<<<<< HEAD
-<<<<<<< HEAD
 import od_Route from "./routes/ordersRoute.js";
 import orderdetail_route from "./routes/orderDetailRoute.js";
-=======
 import pr_Route from "./routes/productRoute.js"; 
->>>>>>> b60f829 (Lưu thay đổi của tôi trong src/index.js)
-=======
 import image_route from "./routes/imageRoute.js";
->>>>>>> 4595a84 (Cập nhật thêm backend Images)
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors(
@@ -43,7 +36,6 @@ connection.getConnection((err) => {
   console.log("Kết nối cơ sở dữ liệu thành công!");
 });
 app.use("/auth", auth_route);
-<<<<<<< HEAD
 app.use("/orders", od_Route);
 app.use("/orderdetail", orderdetail_route);
 app.use("/api", router);
@@ -52,16 +44,11 @@ app.get("/", (req, res) => res.send("Server hoạt động!"));
 
 app.use("/api/customers",customer_route);
 
-=======
 app.use("/customers",customer_route);
-<<<<<<< HEAD
 app.get("/", (req, res) => res.send("Server hoạt động!"));
 
->>>>>>> b60f829 (Lưu thay đổi của tôi trong src/index.js)
-=======
 app.use("/products", pr_Route);
 app.use("/images", image_route);
->>>>>>> 4595a84 (Cập nhật thêm backend Images)
 app.listen(3000, () => {
   console.log("Server đang chạy tại http://localhost:3000");
 });
