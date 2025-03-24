@@ -43,7 +43,7 @@ export const getProductWithPromotion = async (req, res) => {
     try {
         const {id} = req.params;
         const result = await pro.getProductWithPromotion(id);
-        return res.status(200).json(me,result);
+        return res.status(200).json(result);
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: 'Lấy sản phẩm có Promotion thất bại' ,error:error.message});
@@ -55,7 +55,7 @@ export const applyPromotion = async (req, res) => {
         const {id} = req.params;
         const {products} = req.body;
         const result = await pro.applyPromotion(id, products);
-        return res.status(200).json({message:" thanh cong",result});
+        return res.status(200).json(result);
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: 'Áp dụng Promotion thất bại' ,error:error.message});
