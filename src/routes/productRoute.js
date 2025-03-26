@@ -68,4 +68,5 @@ pr_Route.get("/categories", async (req, res) => {
   }
 });
 pr_Route.post("/add_attribute", pr.add_attribute);
+pr_Route.post("/import_product", pr.import_product);
 export default pr_Route;

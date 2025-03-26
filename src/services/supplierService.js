@@ -1,13 +1,13 @@
 import connection from '../database/database.js';
 
 export const getSuppliers = async () => {
-    const query = "SELECT * FROM suppliers";
+    const query = "SELECT * FROM suppliers where status = 1";
     const [result] = await connection.execute(query);
     return result;
 };
 
 export const getSupplierById = async (id) => {
-    const query = "SELECT * FROM suppliers WHERE SupplierID = ?";
+    const query = "SELECT * FROM suppliers WHERE SupplierID = ? and status = 1";
     const [result] = await connection.execute(query, [id]);
     return result;
 };
