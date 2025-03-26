@@ -41,7 +41,6 @@ export const getOrderByID = async (req, res) => {
     try {
         const OrderID = req.params.id;
         const result = await od.getOrderByID(OrderID);
-        console.log(result);
         return res.status(200).json(result)
     } catch (error) {
         return res.status(500).json({ message: 'Lấy Orders theo ID thất bại'})
@@ -58,8 +57,9 @@ export const getOrderByUserID = async (req, res) => {
 }
 export const updateOrderStatus = async (req, res) => {
     try {
-        const {OrderID, Status} = req.body;
-        const result = await od.updateOrderStatus(OrderID, Status);
+        const {id, Status} = req.body;
+        console.log(id, Status)
+        const result = await od.updateOrderStatus(id, Status);
         return res.status(200).json(result);
     } catch (error) {
         return res.status(500).json({ message: 'Cập nhật trạng thái đơn hàng thất bại'})

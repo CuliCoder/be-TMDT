@@ -168,7 +168,6 @@ export const add_product = async (req, res) => {
 };
 export const get_product_by_productID = async (req, res) => {
   try {
-    console.log(req.params.id);
     if (!req.params.id) {
       return res.status(400).json({
         error: 1,
