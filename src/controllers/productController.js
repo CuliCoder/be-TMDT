@@ -5,9 +5,9 @@ export const getProducts = async (req, res) => {
   try {
     console.log("🔍 [GET] /products - Lấy danh sách sản phẩm");
     const products = await productService.getAllProducts();
-    res.status(200).json(products);
+    return res.status(200).json(products);
   } catch (error) {
-    res
+    return res
       .status(500)
       .json({ message: "Lỗi lấy danh sách sản phẩm", error: error.message });
   }
@@ -87,6 +87,13 @@ export const add_product_item = async (req, res) => {
         message: "Vui lòng nhập đủ thông tin",
       });
     }
+    const profitMargin = parseFloat(req.body.profit_margin);
+    if (isNaN(profitMargin) || profitMargin >= 100 || profitMargin < 0) {
+      return res.status(400).json({
+        error: 1,
+        message: "Lợi nhuận không hợp lệ",
+      });
+    }
     if (JSON.parse(req.body.variants).length === 0) {
       return res.status(400).json({
         error: 1,
@@ -107,6 +114,25 @@ export const add_product_item = async (req, res) => {
 };
 export const update_product_item = async (req, res) => {
   try {
+    if (!req.body.product_item_id || !req.body.sku) {
+      return res.status(400).json({
+        error: 1,
+        message: "Vui lòng nhập đủ thông tin",
+      });
+    }
+    const profitMargin = parseFloat(req.body.profit_margin);
+    if (isNaN(profitMargin) || profitMargin >= 100 || profitMargin < 0) {
+      return res.status(400).json({
+        error: 1,
+        message: "Lợi nhuận không hợp lệ",
+      });
+    }
+    if (JSON.parse(req.body.variants).length === 0) {
+      return res.status(400).json({
+        error: 1,
+        message: "Vui lòng thêm thuộc tính sản phẩm",
+      });
+    }
     const result = await productService.edit_product_item(
       req.body,
       req.file ? req.file : null
@@ -202,7 +228,7 @@ export const delete_product_item = async (req, res) => {
   } catch (error) {
     return res.status(500).json(error);
   }
-}
+};
 export const delete_product = async (req, res) => {
   try {
     if (!req.params.id) {
@@ -216,4 +242,12 @@ export const delete_product = async (req, res) => {
   } catch (error) {
     return res.status(500).json(error);
   }
-}
+};
+export const import_product = async (req, res) => {
+  try {
+    const result = await productService.import_product(req.body);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};

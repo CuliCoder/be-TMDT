@@ -59,7 +59,7 @@ JOIN variation_opt AS opt
   ON con.variation_option_id = opt.id 
 JOIN variation AS va 
   ON opt.variationID = va.VariantID 
-WHERE it.product_id = ? and it.status = 1
+WHERE it.product_id = ? and it.status != 0
 GROUP BY it.id;`,
         [id]
       );
@@ -79,7 +79,7 @@ export const get_product_item_all = () =>
       on it.id = con.product_item_id join variation_opt as opt 
       on con.variation_option_id = opt.id join variation as va 
       on opt.variationID = va.VariantID
-      where it.status = 1
+      where it.status != 0
       group by it.id
       `
       );
@@ -107,7 +107,7 @@ export const add_product_item = (data, imagePath) =>
         });
       }
       const [product] = await database.query(
-        `INSERT INTO product_item (product_id, sku, qty_in_stock, product_image, price, description) VALUES (?,?,?,?,?,?) `,
+        `INSERT INTO product_item (product_id, sku, qty_in_stock, product_image, price, description, profit_margin, status) VALUES (?,?,?,?,?,?,?,2) `,
         [
           data.product_id,
           data.sku,
@@ -115,6 +115,7 @@ export const add_product_item = (data, imagePath) =>
           "/products/" + imagePath.filename,
           0,
           data.description,
+          data.profit_margin,
         ]
       );
       if (product.affectedRows === 0) {
@@ -175,16 +176,22 @@ export const edit_product_item = (data, imagePath) =>
       }
       const [product] = await database.query(
         imagePath
-          ? `UPDATE product_item SET sku = ?, product_image = ?, description = ? WHERE id = ?`
-          : `UPDATE product_item SET sku = ?, description = ? WHERE id = ?`,
+          ? `UPDATE product_item SET sku = ?, product_image = ?, description = ?, profit_margin = ? WHERE id = ?`
+          : `UPDATE product_item SET sku = ?, description = ?, profit_margin = ? WHERE id = ?`,
         imagePath
           ? [
               data.sku,
               "/products/" + imagePath.filename,
               data.description,
+              data.profit_margin,
               data.product_item_id,
             ]
-          : [data.sku, data.description, data.product_item_id]
+          : [
+              data.sku,
+              data.description,
+              data.profit_margin,
+              data.product_item_id,
+            ]
       );
       if (product.affectedRows === 0) {
         return resolve({
@@ -372,7 +379,8 @@ export const delete_product_item = (id) =>
       });
     }
   });
-  export const delete_product = (id) => new Promise(async (resolve, reject) => {
+export const delete_product = (id) =>
+  new Promise(async (resolve, reject) => {
     try {
       const [delete_product] = await database.execute(
         `update products set status = 0 where ProductID = ?`,
@@ -392,4 +400,82 @@ export const delete_product_item = (id) =>
         error: error.message,
       });
     }
-  })
+  });
+export const import_product = (data) =>
+  new Promise(async (resolve, reject) => {
+    try {
+      const [import_product] = await database.execute(
+        `INSERT INTO product_imports (idsupplier,total_price) VALUES (?,?)`,
+        [data.idsupplier, data.total_price]
+      );
+      if (import_product.affectedRows === 0) {
+        return resolve({
+          error: 1,
+          message: "Nhập hàng thất bại",
+        });
+      }
+      const import_id = import_product.insertId;
+      let values = [];
+      let placeholders = [];
+
+      for (let i = 0; i < data.orderImport.length; i++) {
+        values.push(
+          import_id,
+          data.orderImport[i].id_item_product,
+          data.orderImport[i].qty,
+          data.orderImport[i].price
+        );
+        placeholders.push("(?, ?, ?, ?)");
+      }
+
+      const query = `INSERT INTO product_import_details (idproduct_import, idproduct_item, quantity, price) VALUES ${placeholders.join(
+        ", "
+      )}`;
+      const [import_product_item] = await database.execute(query, values);
+      if (import_product_item.affectedRows === 0) {
+        return resolve({
+          error: 1,
+          message: "Nhập hàng thất bại",
+        });
+      }
+      for (let i = 0; i < data.orderImport.length; i++) {
+        const [get_product_item] = await database.execute(
+          `SELECT * FROM product_item WHERE id = ?`,
+          [data.orderImport[i].id_item_product]
+        );
+        if (get_product_item.length === 0) {
+          return resolve({
+            error: 1,
+            message: "Nhập hàng thất bại",
+          });
+        }
+        const qty_in_stock =
+          get_product_item[0].qty_in_stock + data.orderImport[i].qty;
+        const price =
+          data.orderImport[i].price *
+          (1 + get_product_item[0].profit_margin / 100);
+        const [update_product_item] = await database.execute(
+          `UPDATE product_item SET qty_in_stock = ?, price = ?, status = 1 WHERE id = ?`,
+          [qty_in_stock, price, data.orderImport[i].id_item_product]
+        );
+        if (update_product_item.affectedRows === 0) {
+          return resolve({
+            error: 1,
+            message: "Nhập hàng thất bại",
+          });
+        }
+      }
+      resolve({
+        error: 0,
+        message: "Nhập hàng thành công",
+        import_id: import_id,
+      });
+    } catch (error) {
+      console.log(error);
+      reject({
+        error: 1,
+        message: "Nhập hàng thất bại",
+        error: error.message,
+      });
+    }
+  });
