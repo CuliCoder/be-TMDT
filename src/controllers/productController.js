@@ -5,9 +5,9 @@ export const getProducts = async (req, res) => {
   try {
     console.log("🔍 [GET] /products - Lấy danh sách sản phẩm");
     const products = await productService.getAllProducts();
-    res.status(200).json(products);
+    return res.status(200).json(products);
   } catch (error) {
-    res
+    return res
       .status(500)
       .json({ message: "Lỗi lấy danh sách sản phẩm", error: error.message });
   }
@@ -250,4 +250,4 @@ export const import_product = async (req, res) => {
   } catch (error) {
     return res.status(500).json(error);
   }
-}
+};
