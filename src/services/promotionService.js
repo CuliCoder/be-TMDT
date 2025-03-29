@@ -2,7 +2,7 @@ import connection from "../database/database.js";
 
 export const getPromotions = async () => {
     try {
-        const query = "select * from promotions";
+        const query = "SELECT * FROM promotions";
         const [result] = await connection.execute(query);
         return result;
     } catch (error) {
@@ -24,6 +24,8 @@ export const createPromotion = async (PromotionName, Description, DiscountRate, 
     }
 }
 
+
+
 export const updatePromotion = async (PromotionID, PromotionName, Description, DiscountRate, StartDate, EndDate) => {
     try {
         const query = `
@@ -37,6 +39,17 @@ export const updatePromotion = async (PromotionID, PromotionName, Description, D
         throw error;
     }
 }
+
+export const deletePromotion = async (PromotionID) => {
+    try {
+        const query = "DELETE FROM promotions WHERE PromotionID = ?";
+        await connection.execute(query, [PromotionID]);
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
+}
+
 
 export const getProductWithPromotion = async (id) => {
     try {
