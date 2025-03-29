@@ -58,6 +58,7 @@ export const getProductWithPromotion = async (id) => {
             CASE WHEN pp.PromotionID IS NOT NULL THEN 1 ELSE 0 END as IsPromotion
             FROM products as p
             LEFT JOIN productpromotions as pp ON p.ProductID = pp.ProductID AND pp.PromotionID = ?
+            where p.status = 1
         `;
         const [result] = await connection.execute(query, [id]);
         return result;
