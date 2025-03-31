@@ -15,6 +15,7 @@ import supplier_route from "./routes/supplierRoute.js";
 import promotion_route from "./routes/promotionRoute.js";
 import brand_route from "./routes/brandRoute.js";
 import catagory_route from "./routes/catagoryRoute.js";
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors({
@@ -47,6 +48,7 @@ app.get("/", (req, res) => res.send("Server hoạt động!"));
 app.use("/api/customers",customer_route);
 app.use("/customers",customer_route);
 app.use("/product", pr_Route);
+app.use("/products", pr_Route);
 app.use("/images", image_route);
 app.use("/brands",brand_route);
 app.use("/api/suppliers",supplier_route);
