@@ -17,25 +17,26 @@ export const getCustomerById = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ message: 'Lấy danh sách khách hànghàng thất bại' , error:error.message});
+        return res.status(500).json({ message: 'Lấy  khách hàng thất bại' , error:error.message});
     }
 }
 export const updateCustomer = async (req, res) => { 
     try {
         const id = req.params.id;
-        const { Username, FullName, Email, PhoneNumber } = req.body;
+        const {  FullName, Email, PhoneNumber } = req.body;
 
-        if (!id || !Username || !Email || !PhoneNumber) {
+        if (!id || !Email || !PhoneNumber) {
             return res.status(400).json({ message: "Thiếu dữ liệu cần thiết!" });
         }
     
-        const result = await cus.updateCustomer(id, Username, Email, FullName, PhoneNumber);
+        const result = await cus.updateCustomer(id, Email, FullName, PhoneNumber);
         return res.json({ message: "Cập nhật thành công!", result });
     } catch (error) {
         console.error("Lỗi updateCustomer:", error);
         return res.status(500).json({ message: "Lỗi server!" });
     }
 };
+
 export const deleteCustomer = async (req, res) => {
     try {
         const id = req.params.id;
@@ -49,17 +50,32 @@ export const deleteCustomer = async (req, res) => {
         return res.status(500).json({ message: "Lỗi server!" });
     }
 }
-    export const statusCustomer = async (req, res) => {
-        try {
-            const id = req.params.id;
-            const {status} = req.body;
-            if (!id) {
-                return res.status(400).json({ message: "Thiếu ID khách hàng!" });
-            }
-            const result = await cus.statusCustomer(id, status);
-            return res.json({ message: "Cập nhật trạng thái thành công!", result });
-        } catch (error) {
-            console.error("Lỗi statusCustomer:", error);
-            return res.status(500).json({ message: "Lỗi server!" });
+export const statusCustomer = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const {status} = req.body;
+        if (!id) {
+            return res.status(400).json({ message: "Thiếu ID khách hàng!" });
         }
+        const result = await cus.statusCustomer(id, status);
+        return res.json({ message: "Cập nhật trạng thái thành công!", result });
+    } catch (error) {
+        console.error("Lỗi statusCustomer:", error);
+        return res.status(500).json({ message: "Lỗi server!" });
     }
+}
+
+export const changePasswords = (req, res) => {
+    try {
+        const {id} = req.params;
+        const {oldPassword, newPassword } = req.body;
+        if (!id || !oldPassword || !newPassword) {
+            return res.status(400).json({ message: "Thiếu dữ liệu cần thiết!" });
+        }
+        const result = cus.changePasswords(id, oldPassword, newPassword);
+        return res.json({ message: "đổi pass thành công", result });
+        } catch (error) {
+        console.error("lỗi:", error);
+        return res.status(500).json({ message: "lỗi server!" });
+    }
+}

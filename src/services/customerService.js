@@ -28,15 +28,14 @@ export const getCustomerById = async(id) => {
         throw error;
     }
 }
-export const updateCustomer = async (id, username, password, email, fullname, phonenumber) => {
+export const updateCustomer = async (id, email, fullname, phonenumber) => {
     try {
-        const hashPass = hashPassword(password);
         const query = `
             UPDATE users 
-            SET username = ?, passwordhash = ?, email = ?, fullname = ?, phonenumber = ?
+            SET   email = ?, fullname = ?, phonenumber = ?
             WHERE UserID = ?
         `;
-        const [result] = await connection.execute(query, [username, hashPass, email, fullname, phonenumber, id]);
+        const [result] = await connection.execute(query, [  email, fullname, phonenumber, id]);
     } catch (error) {
         console.error("Lỗi updateCustomer:", error);
         throw error;
@@ -61,3 +60,36 @@ export const statusCustomer = async (id,status) => {
         throw error;
     }
 }
+
+export const changePasswords = async (id, oldPassword, newPassword) => {
+    try {
+        // 1. Lấy thông tin user từ database
+        const queryGetUser = "SELECT password FROM users WHERE UserID = ?";
+        const [users] = await connection.execute(queryGetUser, [id]);
+
+        // 2. Kiểm tra nếu user không tồn tại
+        if (users.length === 0) {
+            throw new Error("Người dùng không tồn tại!");
+        }
+
+        const hashedPassword = users[0].password; // Password đã mã hóa trong DB
+
+        // 3. So sánh password cũ với hashed password trong DB
+        const isMatch = bcrypt.compareSync(oldPassword, hashedPassword);
+        if (!isMatch) {
+            throw new Error("Mật khẩu cũ không chính xác!");
+        }
+
+        // 4. Mã hóa mật khẩu mới
+        const newHashedPassword = hashPassword(newPassword)
+
+        // 5. Cập nhật mật khẩu mới vào database
+        const queryUpdatePassword = "UPDATE users SET password = ? WHERE UserID = ?";
+        await connection.execute(queryUpdatePassword, [newHashedPassword, id]);
+
+        return { message: "Đổi mật khẩu thành công!" };
+    } catch (error) {
+        console.error("Lỗi changePasswords:", error);
+        throw error;
+    }
+};
