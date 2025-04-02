@@ -251,3 +251,25 @@ export const import_product = async (req, res) => {
     return res.status(500).json(error);
   }
 };
+export const get_product_display = async (req, res) => {
+  try {
+    const result = await productService.get_product_display();
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+export const get_product_item_by_categoryID = async (req, res) => {
+  try {
+    if (!req.params.id) {
+      return res.status(400).json({
+        error: 1,
+        message: "Vui lòng nhập đủ thông tin",
+      });
+    }
+    const result = await productService.get_product_item_by_categoryID(req.params.id);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};

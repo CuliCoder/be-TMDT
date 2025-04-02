@@ -26,15 +26,17 @@ pr_Route.get(
 );
 pr_Route.get("/product_item_by_ID/:id", pr.get_product_item_by_ID);
 pr_Route.get("/product_item_all", pr.get_product_item_all);
+pr_Route.get("/product_display", pr.get_product_display);
+pr_Route.get("/product_item_by_categoryID/:id", pr.get_product_item_by_categoryID);
 pr_Route.post("/add_product_item", upload.single("image"), pr.add_product_item);
 pr_Route.put(
   "/update_product_item",
   upload.single("image"),
   pr.update_product_item
 );
+pr_Route.get("/get_product_by_productID/:id", pr.get_product_by_productID);
 pr_Route.post("/add_product", upload.single("image"), pr.add_product);
 pr_Route.put("/update_product", upload.single("image"), pr.update_product);
-pr_Route.get("/get_product_by_productID/:id", pr.get_product_by_productID);
 pr_Route.delete("/delete_product_item/:id", pr.delete_product_item);
 pr_Route.delete("/delete_product/:id", pr.delete_product);
 pr_Route.get("/categoryByProductID/:id", async (req, res) => {

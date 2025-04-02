@@ -4,7 +4,7 @@ import database from "../database/database.js";
 export const getAllProducts = async () => {
   try {
     const [rows] = await database.execute(
-      "SELECT pr.*, ca.CategoryName FROM products as pr join categories as ca on pr.category_id = ca.CategoryID where pr.status = 1"
+      "SELECT pr.*, ca.CategoryName FROM products as pr join categories as ca on pr.category_id = ca.CategoryID where pr.status = 1 order by pr.ProductID desc"
     );
     return rows;
   } catch (error) {
@@ -60,7 +60,7 @@ JOIN variation_opt AS opt
 JOIN variation AS va 
   ON opt.variationID = va.VariantID 
 WHERE it.product_id = ? and it.status != 0
-GROUP BY it.id;`,
+GROUP BY it.id order by it.id desc;`,
         [id]
       );
       resolve(product);
@@ -80,8 +80,7 @@ export const get_product_item_all = () =>
       on con.variation_option_id = opt.id join variation as va 
       on opt.variationID = va.VariantID
       where it.status != 0
-      group by it.id
-      `
+      group by it.id order by it.id desc;`
       );
       if (product.length !== 0) {
         for (let i = 0; i < product.length; i++) {
@@ -479,3 +478,87 @@ export const import_product = (data) =>
       });
     }
   });
+export const get_product_display = () =>
+  new Promise(async (resolve, reject) => {
+    try {
+      const [product] = await database.query(
+        `SELECT it.*, pr.ProductName, ANY_VALUE(pro.DiscountRate) AS DiscountRate,
+  JSON_ARRAYAGG(
+    JSON_OBJECT(
+      'variantID', opt.variationID,
+      'variantName', va.VariantName,
+      'values', opt.value
+      )
+  ) AS attributes
+FROM product_item AS it 
+JOIN product_configuration AS con 
+  ON it.id = con.product_item_id 
+JOIN products AS pr 
+  ON it.product_id = pr.ProductID
+LEFT JOIN productpromotions AS pp 
+  ON it.product_id = pp.ProductID
+LEFT JOIN promotions AS pro
+  ON pp.PromotionID = pro.PromotionID
+JOIN variation_opt AS opt 
+  ON con.variation_option_id = opt.id 
+JOIN variation AS va 
+  ON opt.variationID = va.VariantID 
+WHERE it.status = 1
+GROUP BY it.id order by it.id desc`
+      );
+      resolve({
+        error: 0,
+        message: "Lấy danh sách sản phẩm thành công",
+        data: product,
+      });
+    } catch (error) {
+      reject({
+        error: 1,
+        message: "Lấy danh sách sản phẩm thất bại",
+        error: error.message,
+      });
+    }
+  });
+export const get_product_item_by_categoryID = (categoryID) =>
+  new Promise(async (resolve, reject) => {
+    try {
+      const [product] = await database.query(
+        `SELECT it.*, pr.ProductName, ANY_VALUE(pro.DiscountRate) AS DiscountRate,
+  JSON_ARRAYAGG(
+    JSON_OBJECT(
+      'variantID', opt.variationID,
+      'variantName', va.VariantName,
+      'values', opt.value
+      )
+  ) AS attributes
+FROM product_item AS it
+JOIN product_configuration AS con 
+  ON it.id = con.product_item_id
+JOIN products AS pr
+  ON it.product_id = pr.ProductID
+LEFT JOIN productpromotions AS pp
+  ON it.product_id = pp.ProductID
+LEFT JOIN promotions AS pro
+  ON pp.PromotionID = pro.PromotionID
+JOIN variation_opt AS opt
+  ON con.variation_option_id = opt.id
+JOIN variation AS va
+  ON opt.variationID = va.VariantID
+WHERE it.status = 1 and pr.category_id = ?
+GROUP BY it.id order by it.id desc`,
+        [categoryID]
+      );
+      resolve({
+        error: 0,
+        message: "Lấy danh sách sản phẩm thành công",
+        data: product,
+      });
+    } catch (error) {
+      reject({
+        error: 1,
+        message: "Lấy danh sách sản phẩm thất bại",
+        error: error.message,
+      });
+    }
+  });
+  
