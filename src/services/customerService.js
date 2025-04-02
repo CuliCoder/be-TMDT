@@ -22,7 +22,7 @@ export const getCustomerById = async(id) => {
     try {
         const query ="select * from users where role = 'customer' and UserID = ?";
         const [result] = await connection.execute(query, [id]);
-        return result;
+        return result[0];
     } catch (error) {
         console.error(error);
         throw error;
@@ -64,7 +64,7 @@ export const statusCustomer = async (id,status) => {
 export const changePasswords = async (id, oldPassword, newPassword) => {
     try {
         // 1. Lấy thông tin user từ database
-        const queryGetUser = "SELECT password FROM users WHERE UserID = ?";
+        const queryGetUser = "SELECT * FROM users WHERE UserID = ?";
         const [users] = await connection.execute(queryGetUser, [id]);
 
         // 2. Kiểm tra nếu user không tồn tại
@@ -72,19 +72,19 @@ export const changePasswords = async (id, oldPassword, newPassword) => {
             throw new Error("Người dùng không tồn tại!");
         }
 
-        const hashedPassword = users[0].password; // Password đã mã hóa trong DB
+        const hashedPassword = users[0].PasswordHash; // Password đã mã hóa trong DB
 
         // 3. So sánh password cũ với hashed password trong DB
         const isMatch = bcrypt.compareSync(oldPassword, hashedPassword);
         if (!isMatch) {
-            throw new Error("Mật khẩu cũ không chính xác!");
+            return {message: "Mật khẩu cũ không chính xác"}
         }
 
         // 4. Mã hóa mật khẩu mới
-        const newHashedPassword = hashPassword(newPassword)
+        const newHashedPassword = bcrypt.hashSync(newPassword, 10);
 
         // 5. Cập nhật mật khẩu mới vào database
-        const queryUpdatePassword = "UPDATE users SET password = ? WHERE UserID = ?";
+        const queryUpdatePassword = "UPDATE users SET PasswordHash = ? WHERE UserID = ?";
         await connection.execute(queryUpdatePassword, [newHashedPassword, id]);
 
         return { message: "Đổi mật khẩu thành công!" };

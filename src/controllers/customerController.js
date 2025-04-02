@@ -65,17 +65,21 @@ export const statusCustomer = async (req, res) => {
     }
 }
 
-export const changePasswords = (req, res) => {
+export const changePasswords = async (req, res) => {
     try {
-        const {id} = req.params;
-        const {oldPassword, newPassword } = req.body;
+        const { id } = req.params;
+        const { oldPassword, newPassword } = req.body;
+        
+        // Kiểm tra dữ liệu đầu vào
         if (!id || !oldPassword || !newPassword) {
             return res.status(400).json({ message: "Thiếu dữ liệu cần thiết!" });
         }
-        const result = cus.changePasswords(id, oldPassword, newPassword);
-        return res.json({ message: "đổi pass thành công", result });
-        } catch (error) {
-        console.error("lỗi:", error);
-        return res.status(500).json({ message: "lỗi server!" });
+
+        // Gọi hàm changePasswords trong service
+        const result = await cus.changePasswords(id, oldPassword, newPassword);
+        return res.json({ message: result.message });
+    } catch (error) {
+        console.error("Lỗi:", error);
+        return res.status(500).json({ message: "Lỗi server!" });
     }
-}
+};
