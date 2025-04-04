@@ -15,10 +15,10 @@ export const getAddressesByCustomer = async (iduser) => {
 
 
 // Thêm địa chỉ mới
-export const addAddress = async (iduser, address) => {
+export const addAddress = async (iduser,phonenumber, address ) => {
     try {
-        const query = "INSERT INTO user_address (iduser, address) VALUES (?, ?)";
-        const [result] = await connection.execute(query, [iduser, address]);
+        const query = "INSERT INTO user_address (iduser,phonenumber, address) VALUES (?,?, ?)";
+        const [result] = await connection.execute(query, [iduser,phonenumber, address]);
         return result;    
     } catch (error) {
         console.error(error);
@@ -27,10 +27,10 @@ export const addAddress = async (iduser, address) => {
 };
 
 // Cập nhật địa chỉ
-export const updateAddress = async (id, address) => {
+export const updateAddress = async (id,phonenumber, address) => {
     try {
-        const query = "UPDATE user_address SET address = ? WHERE iduser_address = ?";
-        const [result] = await connection.execute(query, [address,id]);
+        const query = "UPDATE user_address SET phonenumber = ?, address = ? WHERE iduser_address = ?";
+        const [result] = await connection.execute(query, [phonenumber,address,id]);
         return result;    
     } catch (error) {
         console.log(error)

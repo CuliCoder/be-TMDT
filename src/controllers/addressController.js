@@ -17,11 +17,11 @@ export const getAddressesByCustomer = async (req, res) => {
 // Thêm địa chỉ mới
 export const addAddress = async (req, res) => {
     try {
-        const { iduser, address } = req.body;
-        if (!iduser || !address) {
+        const { iduser,phonenumber,address } = req.body;
+        if (!iduser || !address || !phonenumber) {
             return res.status(400).json({ success: false, message: "Thiếu dữ liệu cần thiết!" });
         }
-        const newAddress = await addressService.addAddress(iduser, address);
+        const newAddress = await addressService.addAddress(iduser,  phonenumber,address);
         res.status(201).json({ success: true, message: "Thêm địa chỉ thành công!", data: newAddress });
     } catch (error) {
         console.error("Lỗi addAddress:", error);
@@ -33,8 +33,8 @@ export const addAddress = async (req, res) => {
 export const updateAddress = async (req, res) => {
     try {
         const { id } = req.params;
-        const { address } = req.body;
-        const updatedAddress = await addressService.updateAddress(id, address);
+        const {phonenumber, address } = req.body;
+        const updatedAddress = await addressService.updateAddress(id,phonenumber, address);
         res.json({ success: true, message: "Cập nhật địa chỉ thành công!", data: updatedAddress });
     } catch (error) {
         console.error("Lỗi updateAddress:", error);
