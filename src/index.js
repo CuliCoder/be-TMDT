@@ -16,6 +16,8 @@ import promotion_route from "./routes/promotionRoute.js";
 import brand_route from "./routes/brandRoute.js";
 import catagory_route from "./routes/catagoryRoute.js";
 import address_route from "./routes/addressRoute.js";
+import cart_router from "./routes/cartRouter.js";
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors({
@@ -55,6 +57,7 @@ app.use("/api/suppliers",supplier_route);
 app.use("/api/promotions",promotion_route);
 app.use("/categories",catagory_route);
 app.use("/api/addressCustomer",address_route)
+app.use("/cart", cart_router);
 app.listen(3000, () => {
   console.log("Server đang chạy tại http://localhost:3000");
 });

@@ -16,22 +16,24 @@ export const get_product_item_by_ID = (id) =>
     try {
       const [product] = await database.query(
         `SELECT it.*,
-  JSON_ARRAYAGG(
-    JSON_OBJECT(
-      'variantID', opt.variationID,
-      'variantName', va.VariantName,
-      'values', opt.value
-      )
-  ) AS attributes
-FROM product_item AS it 
-JOIN product_configuration AS con 
-  ON it.id = con.product_item_id 
-JOIN variation_opt AS opt 
-  ON con.variation_option_id = opt.id 
-JOIN variation AS va 
-  ON opt.variationID = va.VariantID 
-WHERE it.id = ? and it.status = 1
-GROUP BY it.id;`,
+            CONCAT('[', 
+            GROUP_CONCAT(
+            JSON_OBJECT(
+            'variantID', opt.variationID,
+            'variantName', va.VariantName,
+            'values', opt.value
+            )
+            ), 
+            ']') AS attributes
+        FROM product_item AS it 
+            JOIN product_configuration AS con 
+            ON it.id = con.product_item_id 
+            JOIN variation_opt AS opt 
+            ON con.variation_option_id = opt.id 
+            JOIN variation AS va 
+            ON opt.variationID = va.VariantID 
+        WHERE it.id = 2 and it.status = 1
+        GROUP BY it.id;`,
         [id]
       );
       resolve(product[0]);
