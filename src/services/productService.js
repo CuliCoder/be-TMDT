@@ -15,28 +15,41 @@ export const get_product_item_by_ID = (id) =>
   new Promise(async (resolve, reject) => {
     try {
       const [product] = await database.query(
-        `SELECT it.*,
-            CONCAT('[', 
-            GROUP_CONCAT(
-            JSON_OBJECT(
-            'variantID', opt.variationID,
-            'variantName', va.VariantName,
-            'values', opt.value
-            )
-            ), 
-            ']') AS attributes
-        FROM product_item AS it 
-            JOIN product_configuration AS con 
-            ON it.id = con.product_item_id 
-            JOIN variation_opt AS opt 
-            ON con.variation_option_id = opt.id 
-            JOIN variation AS va 
-            ON opt.variationID = va.VariantID 
-        WHERE it.id = 2 and it.status = 1
-        GROUP BY it.id;`,
+        `SELECT it.*, opt.variationID AS variantID, va.VariantName AS variantName, opt.value FROM product_item AS it JOIN product_configuration AS con 
+ON it.id = con.product_item_id
+JOIN variation_opt AS opt 
+ON con.variation_option_id = opt.id
+JOIN variation AS va 
+ON opt.variationID = va.VariantID
+WHERE it.id = ? AND it.status != 0`,
         [id]
       );
-      resolve(product[0]);
+      if(product.length === 0) {
+        return resolve({
+          error: 1,
+          message: "Không tìm thấy sản phẩm",
+        });
+      }
+      let productResult = {
+        id: product[0].id,
+        product_id: product[0].product_id,
+        sku: product[0].SKU,
+        qty_in_stock: product[0].qty_in_stock,
+        product_image: product[0].product_image,
+        price: product[0].price,
+        description: product[0].description,
+        status: product[0].status,
+        profit_margin: product[0].profit_margin,
+        attributes: [],
+      }
+      product.forEach((product) => {
+        productResult.attributes.push({
+          variantID: product.variantID,
+          variantName: product.variantName,
+          values: product.value,
+        });
+      });
+      resolve(productResult);
     } catch (error) {
       console.log(error);
       reject(error);
@@ -563,4 +576,3 @@ GROUP BY it.id order by it.id desc`,
       });
     }
   });
-  
