@@ -8,4 +8,5 @@ promotion_route.put('/:id', promotion.updatePromotion);
 promotion_route.delete('/:id', promotion.deletePromotion);
 promotion_route.get('/:id/products', promotion.getProductWithPromotion);
 promotion_route.post('/:id/apply', promotion.applyPromotion);
+promotion_route.get('/:id/percent', promotion.getpercent_by_product_item_ID);
 export default promotion_route;

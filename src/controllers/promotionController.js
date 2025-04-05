@@ -75,3 +75,14 @@ export const applyPromotion = async (req, res) => {
         return res.status(500).json({ message: 'Áp dụng Promotion thất bại', error: error.message });
     }
 }
+export const getpercent_by_product_item_ID = async (req, res) => {
+    try {
+        const product_item_ID = req.params.id;
+        console.log(product_item_ID);
+        const result = await pro.getpercent_by_productID(product_item_ID);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: 'Lấy phần trăm Promotion thất bại' ,error:error.message});
+    }
+}

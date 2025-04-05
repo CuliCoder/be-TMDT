@@ -2,7 +2,12 @@ import connection from "../database/database.js";
 export const getCart = (userID) =>
   new Promise(async (resolve, reject) => {
     try {
-      const query = `SELECT p.ProductID, p.ProductName, p.Price, c.Quantity, i.ImageURL FROM cart as c , products as p, images as i where c.ProductID = p.ProductID and i.ProductID = p.ProductID and c.UserID = ? order by c.AddedDate desc`;
+      const query = `
+      SELECT pi.id , p.ProductName, pi.price, c.Quantity, pi.product_image 
+      FROM cart as c , product_item as pi, products as p
+      where c.Product_Item_ID = pi.id and pi.product_id = p.ProductID and c.UserID = ?
+      order by c.AddedDate desc;
+      `;
       const [carts, fields] = await connection.execute(query, [userID]);
       resolve(carts);
     } catch (error) {
@@ -39,28 +44,28 @@ export const updateCart = (userID, productID, quantity) =>
   new Promise(async (resolve, reject) => {
     try {
       await connection.execute(
-        `UPDATE cart SET Quantity = ? + Quantity WHERE UserID = ? AND ProductID = ? and Quantity + ? >= 1`,
-        [quantity, userID, productID, quantity]
+        `UPDATE cart SET Quantity = ? WHERE UserID = ? AND Product_item_ID = ?`,
+        [quantity, userID, productID]
       );
-      const [updatedCart] = await connection.execute(
-        `SELECT Quantity FROM cart WHERE UserID = ? AND ProductID = ?`,
-        [userID, productID]
-      );
+      // const [updatedCart] = await connection.execute(
+      //   `SELECT Quantity FROM cart WHERE UserID = ? AND ProductID = ?`,
+      //   [userID, productID]
+      // );
       resolve({
         error: 0,
         message: "Cập nhật giỏ hàng thành công",
-        quantity: updatedCart[0].Quantity
+        // quantity: updatedCart[0].Quantity
       });
     } catch (error) {
       reject(error);
     }
   });
-export const removeFromCart = (userID, productID) =>
+export const removeFromCart = (userID, product_item_ID) =>
   new Promise(async (resolve, reject) => {
     try {
       await connection.execute(
-        `DELETE FROM cart WHERE UserID = ? AND ProductID = ?`,
-        [userID, productID]
+        `DELETE FROM cart WHERE UserID = ? AND Product_Item_ID = ?`,
+        [userID, product_item_ID]
       );
       resolve({
         error: 0,
