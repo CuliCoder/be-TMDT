@@ -91,7 +91,6 @@ export const applyPromotion = async (id, products) => {
 } 
 export const getpercent_by_productID = async (productID) => {
     try {
-        console.log(productID);
         const query = `
             SELECT p.DiscountRate
             FROM promotions as p
