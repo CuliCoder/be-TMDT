@@ -59,23 +59,26 @@ export const get_product_item_by_productID = (id) =>
   new Promise(async (resolve, reject) => {
     try {
       const [product] = await database.query(
-        `SELECT it.*,
-  JSON_ARRAYAGG(
-    JSON_OBJECT(
-      'variantID', opt.variationID,
-      'variantName', va.VariantName,
-      'values', opt.value
-      )
-  ) AS attributes
-FROM product_item AS it 
-JOIN product_configuration AS con 
-  ON it.id = con.product_item_id 
-JOIN variation_opt AS opt 
-  ON con.variation_option_id = opt.id 
-JOIN variation AS va 
-  ON opt.variationID = va.VariantID 
-WHERE it.product_id = ? and it.status != 0
-GROUP BY it.id order by it.id desc;`,
+        `SELECT 
+        it.*,
+        CONCAT('[', GROUP_CONCAT(
+        JSON_OBJECT(
+        'variantID', opt.variationID,
+        'variantName', va.VariantName,
+        'values', opt.value
+        )
+        ), ']') AS attributes
+        FROM product_item AS it 
+        JOIN product_configuration AS con 
+        ON it.id = con.product_item_id 
+        JOIN variation_opt AS opt 
+        ON con.variation_option_id = opt.id 
+        JOIN variation AS va 
+        ON opt.variationID = va.VariantID 
+        WHERE it.product_id = ? AND it.status != 0
+        GROUP BY it.id 
+        ORDER BY it.id DESC 
+        LIMIT 0, 25;`,
         [id]
       );
       resolve(product);

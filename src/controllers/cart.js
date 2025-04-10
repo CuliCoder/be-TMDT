@@ -14,9 +14,9 @@ export const getCart = async (req, res) => {
 export const addToCart = async (req, res) => {
   try {
     const userID = req.body.userID;
-    const productID = req.body.productID;
+    const Product_Item_ID = req.body.Product_Item_ID;
     const quantity = req.body.quantity;
-    const result = await cartService.addToCart(userID, productID, quantity);
+    const result = await cartService.addToCart(userID, Product_Item_ID, quantity);
     return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({

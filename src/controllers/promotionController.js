@@ -77,9 +77,8 @@ export const applyPromotion = async (req, res) => {
 }
 export const getpercent_by_product_item_ID = async (req, res) => {
     try {
-        const product_item_ID = req.params.id;
-        console.log(product_item_ID);
-        const result = await pro.getpercent_by_productID(product_item_ID);
+        const productID = req.params.id;
+        const result = await pro.getpercent_by_productID(productID);
         return res.status(200).json(result);
     } catch (error) {
         console.log(error);

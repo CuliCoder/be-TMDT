@@ -89,16 +89,15 @@ export const applyPromotion = async (id, products) => {
         throw error;
     }
 } 
-export const getpercent_by_productID = async (product_item_ID) => {
+export const getpercent_by_productID = async (productID) => {
     try {
-        console.log(product_item_ID);
         const query = `
             SELECT p.DiscountRate
             FROM promotions as p
             JOIN productpromotions as pp ON p.PromotionID = pp.PromotionID
             WHERE pp.ProductID = ? AND CURDATE() BETWEEN p.StartDate AND p.EndDate
         `;
-        const [result] = await connection.execute(query, [product_item_ID]);
+        const [result] = await connection.execute(query, [productID]);
         return result[0]?.DiscountRate || 0;
     } catch (error) {
         console.error(error);

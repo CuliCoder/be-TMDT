@@ -17,22 +17,22 @@ export const getCart = (userID) =>
       reject(error);
     }
   });
-export const addToCart = (userID, productID, quantity) =>
+export const addToCart = (userID, Product_Item_ID, quantity) =>
   new Promise(async (resolve, reject) => {
     try {
       const existingProduct = await connection.execute(
-        `SELECT * FROM cart WHERE UserID = ? AND ProductID = ?`,
-        [userID, productID]
+        `SELECT * FROM cart WHERE UserID = ? AND Product_Item_ID = ?`,
+        [userID, Product_Item_ID]
       );
       if (existingProduct[0].length === 0) {
         await connection.execute(
-          `INSERT INTO cart (UserID, ProductID, Quantity) VALUES (?, ?, ?)`,
-          [userID, productID, quantity]
+          `INSERT INTO cart (UserID, Product_Item_ID, Quantity) VALUES (?, ?, ?)`,
+          [userID, Product_Item_ID, quantity]
         );
       } else {
         await connection.execute(
-          `UPDATE cart SET Quantity = Quantity + ? WHERE UserID = ? AND ProductID = ?`,
-          [quantity, userID, productID]
+          `UPDATE cart SET Quantity = Quantity + ? WHERE UserID = ? AND Product_Item_ID = ?`,
+          [quantity, userID, Product_Item_ID]
         );
       }
       resolve({
