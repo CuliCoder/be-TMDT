@@ -262,6 +262,16 @@ export const cancelOrder = (orderID) =>
     try {
       client = await connection.getConnection();
       await client.beginTransaction();
+      const [checkOrder] = await client.execute(
+        `SELECT * FROM orders WHERE OrderID = ? and payment_status = 'Chưa thanh toán' and Status = 'Chờ duyệt'`,
+        [orderID]
+      );
+      if (checkOrder.length === 0) {
+        return resolve({
+          error: 1,
+          message: "Đơn hàng không tồn tại hoặc đã thanh toán",
+        });
+      }
       const [orderDetails] = await client.execute(
         `SELECT * FROM orderdetails WHERE OrderID = ?`,
         [orderID]
@@ -345,7 +355,7 @@ export const confirmPayment = (orderID) =>
       }
       orderDetails.forEach(async (product) => {
         const [update_reserved_stock] = await client.execute(
-          `update product_item set reserved_stock = reserved_stock - ? and qty_in_stock = qty_in_stock - ? where id = ?`,
+          `update product_item set reserved_stock = reserved_stock - ?, qty_in_stock = qty_in_stock - ? where id = ?`,
           [product.Quantity, product.Quantity, product.Product_Item_ID]
         );
         if (update_reserved_stock.affectedRows === 0) {
@@ -368,21 +378,10 @@ export const confirmPayment = (orderID) =>
         });
       }
       const [updateOrder] = await client.execute(
-        `UPDATE orders SET Status = 'Chuẩn bị hàng' WHERE OrderID = ?`,
+        `UPDATE orders SET payment_status = 'Đã thanh toán' WHERE OrderID = ?`,
         [orderID]
       );
       if (updateOrder.affectedRows === 0) {
-        await client.rollback();
-        return resolve({
-          error: 1,
-          message: "Có lỗi xảy ra trong quá trình xác nhận thanh toán",
-        });
-      }
-      const [update_status_order] = await client.execute(
-        `insert into order_status (idorder,status) VALUES (?, 'Chuẩn bị hàng')`,
-        [orderID]
-      );
-      if (update_status_order.affectedRows === 0) {
         await client.rollback();
         return resolve({
           error: 1,
@@ -416,7 +415,7 @@ export const cancelLateOrders = () =>
       client = await connection.getConnection();
       await client.beginTransaction();
       const [order] = await client.execute(
-        `SELECT * FROM orders WHERE payment_method = 'bank' and status = 'Chờ duyệt' and OrderDate < NOW() - INTERVAL 30 MINUTE`
+        `SELECT * FROM orders WHERE payment_method = 'bank' and payment_status = 'Chưa thanh toán' and OrderDate < NOW() - INTERVAL 30 MINUTE`
       );
       if (order.length === 0) {
         return resolve({
@@ -448,39 +447,26 @@ export const cancelLateOrders = () =>
             });
           }
         });
-        const [deleteOrderDetails] = await client.execute(
-          `
-          DELETE FROM orderdetails WHERE OrderID = ?`,
+        const [updateOrder] = await client.execute(
+          `UPDATE orders SET Status = 'Quá hạn thanh toán' WHERE OrderID = ?`,
           [order[i].OrderID]
         );
-        if (deleteOrderDetails.affectedRows === 0) {
+        if (updateOrder.affectedRows === 0) {
           await client.rollback();
           return resolve({
             error: 1,
-            message: "Hủy đơn hàng không thành công",
+            message: "Có lỗi xảy ra trong quá trình hủy đơn hàng",
           });
         }
-        const [deleteOrderStatus] = await client.execute(
-          `
-          DELETE FROM order_status WHERE idorder = ?`,
+        const [update_status_order] = await client.execute(
+          `insert into order_status (idorder,status) VALUES (?, 'Quá hạn thanh toán')`,
           [order[i].OrderID]
         );
-        if (deleteOrderStatus.affectedRows === 0) {
+        if (update_status_order.affectedRows === 0) {
           await client.rollback();
           return resolve({
             error: 1,
-            message: "Hủy đơn hàng không thành công",
-          });
-        }
-        const [deleteOrder] = await client.execute(
-          `DELETE FROM orders WHERE OrderID = ?`,
-          [order[i].OrderID]
-        );
-        if (deleteOrder.affectedRows === 0) {
-          await client.rollback();
-          return resolve({
-            error: 1,
-            message: "Hủy đơn hàng không thành công",
+            message: "Có lỗi xảy ra trong quá trình hủy đơn hàng",
           });
         }
       }

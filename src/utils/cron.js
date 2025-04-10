@@ -32,7 +32,7 @@ export const checkPaymentFromTransactions = async () => {
       if (!idOrder) continue;
       const id = parseInt(idOrder[1]);
       const [order] = await client.query(
-        "SELECT * FROM orders WHERE OrderID = ? and status ='Chờ duyệt'",
+        "SELECT * FROM orders WHERE OrderID = ? and payment_status = 'Chưa thanh toán'",
         [id]
       );
       if (order.length === 0) continue;
@@ -41,7 +41,7 @@ export const checkPaymentFromTransactions = async () => {
         continue;
       }
       const [result] = await client.query(
-        "UPDATE orders SET status = 'Chuẩn bị hàng' WHERE OrderID = ?",
+        "UPDATE orders SET status = 'Chuẩn bị hàng', payment_status = 'Đã thanh toán' WHERE OrderID = ?",
         [id]
       );
       if (result.affectedRows == 0) {

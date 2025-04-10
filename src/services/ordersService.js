@@ -80,7 +80,7 @@ export const checkOrderStatus = (OrderID) => new Promise(async (resolve, reject)
             return resolve(null); // Không tìm thấy đơn hàng
         }
         const order = result[0];
-        resolve(order.Status);
+        resolve(order);
     } catch (error) {
         console.error("Error checking order status:", error);
         reject({
