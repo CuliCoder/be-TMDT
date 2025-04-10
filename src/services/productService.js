@@ -24,7 +24,7 @@ ON opt.variationID = va.VariantID
 WHERE it.id = ? AND it.status != 0`,
         [id]
       );
-      if(product.length === 0) {
+      if (product.length === 0) {
         return resolve({
           error: 1,
           message: "Không tìm thấy sản phẩm",
@@ -41,7 +41,7 @@ WHERE it.id = ? AND it.status != 0`,
         status: product[0].status,
         profit_margin: product[0].profit_margin,
         attributes: [],
-      }
+      };
       product.forEach((product) => {
         productResult.attributes.push({
           variantID: product.variantID,
@@ -496,37 +496,67 @@ export const import_product = (data) =>
 export const get_product_display = () =>
   new Promise(async (resolve, reject) => {
     try {
-      const [product] = await database.query(
+      // Truy vấn dữ liệu thô từ cơ sở dữ liệu
+      const [rows] = await database.query(
         `SELECT it.*, pr.ProductName, ANY_VALUE(pro.DiscountRate) AS DiscountRate,
-  JSON_ARRAYAGG(
-    JSON_OBJECT(
-      'variantID', opt.variationID,
-      'variantName', va.VariantName,
-      'values', opt.value
-      )
-  ) AS attributes
-FROM product_item AS it 
-JOIN product_configuration AS con 
-  ON it.id = con.product_item_id 
-JOIN products AS pr 
-  ON it.product_id = pr.ProductID
-LEFT JOIN productpromotions AS pp 
-  ON it.product_id = pp.ProductID
-LEFT JOIN promotions AS pro
-  ON pp.PromotionID = pro.PromotionID
-JOIN variation_opt AS opt 
-  ON con.variation_option_id = opt.id 
-JOIN variation AS va 
-  ON opt.variationID = va.VariantID 
-WHERE it.status = 1
-GROUP BY it.id order by it.id desc`
+opt.variationID AS variantID, va.VariantName AS variantName, opt.value FROM product_item AS it
+JOIN product_configuration AS con ON it.id = con.product_item_id 
+JOIN products AS pr ON it.product_id = pr.ProductID
+LEFT JOIN productpromotions AS pp ON it.product_id = pp.ProductID
+LEFT JOIN promotions AS pro ON pp.PromotionID = pro.PromotionID
+JOIN variation_opt AS opt ON con.variation_option_id = opt.id 
+JOIN variation AS va ON opt.variationID = va.VariantID 
+WHERE it.status = 1 ORDER BY it.id DESC`
       );
+
+      if (rows.length === 0) {
+        return resolve({
+          error: 0,
+          message: "Không có sản phẩm nào",
+          data: [],
+        });
+      }
+
+      // Gom dữ liệu thành các sản phẩm với mảng attributes
+      const products = [];
+      const productMap = new Map();
+
+      rows.forEach((row) => {
+        if (!productMap.has(row.id)) {
+          const product = {
+            id: row.id,
+            product_id: row.product_id,
+            sku: row.SKU,
+            qty_in_stock: row.qty_in_stock,
+            product_image: row.product_image,
+            price: row.price,
+            description: row.description,
+            status: row.status,
+            profit_margin: row.profit_margin,
+            ProductName: row.ProductName,
+            DiscountRate: row.DiscountRate,
+            attributes: [],
+          };
+          productMap.set(row.id, product);
+          products.push(product);
+        }
+
+        // Thêm thuộc tính vào mảng attributes
+        const product = productMap.get(row.id);
+        product.attributes.push({
+          variantID: row.variantID,
+          variantName: row.variantName,
+          values: row.value,
+        });
+      });
+
       resolve({
         error: 0,
         message: "Lấy danh sách sản phẩm thành công",
-        data: product,
+        data: products,
       });
     } catch (error) {
+      console.error("Error in get_product_display:", error);
       reject({
         error: 1,
         message: "Lấy danh sách sản phẩm thất bại",

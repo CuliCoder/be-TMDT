@@ -96,7 +96,7 @@ export const getpercent_by_productID = async (product_item_ID) => {
             SELECT p.DiscountRate
             FROM promotions as p
             JOIN productpromotions as pp ON p.PromotionID = pp.PromotionID
-            WHERE pp.Product_item_ID = ? AND CURDATE() BETWEEN p.StartDate AND p.EndDate
+            WHERE pp.ProductID = ? AND CURDATE() BETWEEN p.StartDate AND p.EndDate
         `;
         const [result] = await connection.execute(query, [product_item_ID]);
         return result[0]?.DiscountRate || 0;

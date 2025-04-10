@@ -16,4 +16,5 @@ address_route.put('/:id', addressController.updateAddress);
 address_route.delete('/:id', addressController.deleteAddress);
 
 address_route.put('/set_default/:id', addressController.setDefaultAddress)
+address_route.get('/default/:id', addressController.getDefaultAddress)
 export default address_route;

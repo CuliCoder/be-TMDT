@@ -94,3 +94,14 @@ export const setDefaultAddress = async (req, res) => {
         res.status(500).json({ success: false, message: "Lỗi server!" });
     }
 };
+
+export const getDefaultAddress = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const address = await addressService.getDefaultAddress(id);
+        return res.status(200).json(address);
+    } catch (error) {
+        console.error("Lỗi getDefaultAddress:", error);
+        return res.status(500).json({ success: false, message: "Lỗi server!" });
+    }
+}
