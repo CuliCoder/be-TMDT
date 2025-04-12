@@ -15,7 +15,7 @@ export const get_product_item_by_ID = (id) =>
   new Promise(async (resolve, reject) => {
     try {
       const [product] = await database.query(
-        `SELECT it.*, opt.variationID AS variantID, va.VariantName AS variantName, pro.DiscountRate AS DiscountRate,
+        `SELECT it.*, opt.variationID AS variantID, va.VariantName AS variantName,
 opt.value FROM product_item AS it JOIN product_configuration AS con 
 ON it.id = con.product_item_id
 JOIN variation_opt AS opt 
