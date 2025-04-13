@@ -1,35 +1,25 @@
 import connection from '../database/database.js';
 
-// Lấy top sản phẩm bán chạy
-export const getTopProducts = async (startDate, endDate) => {
+// Lấy top 3 sản phẩm bán chạy nhất
+export const getTopProducts = async () => {
     try {
         const query = `
-            SELECT 
-                p.ProductID, p.ProductName,
-                SUM(od.Quantity) AS totalSold
-            FROM 
-                orderdetails od
-            JOIN 
-                product_item pi ON od.Product_Item_ID = pi.id
-            JOIN 
-                products p ON pi.product_id = p.ProductID
-            JOIN 
-                orders o ON od.OrderID = o.OrderID
-            WHERE 
-                o.OrderDate BETWEEN ? AND ?
-            GROUP BY 
-                p.ProductID, p.ProductName
-            ORDER BY 
-                totalSold DESC
-            LIMIT 10
+            SELECT p.ProductName, SUM(od.Quantity) AS totalSold
+            FROM orderdetails od
+            JOIN product_item pi ON od.Product_Item_ID = pi.id  -- Liên kết với bảng product_item
+            JOIN products p ON pi.product_id = p.ProductID  -- Liên kết với bảng products
+            GROUP BY p.ProductName
+            ORDER BY totalSold DESC
+            LIMIT 1;
         `;
-        const [rows] = await connection.execute(query, [startDate, endDate]);
+        const [rows] = await connection.execute(query);
         return rows;
     } catch (error) {
-        console.error("Error fetching top products:", error);
+        console.error(" SQL error:", error.message);
         throw error;
     }
 };
+
 
 // Lấy tổng doanh thu
 export const getTotalRevenue = async (startDate, endDate) => {
@@ -47,11 +37,28 @@ export const getTotalRevenue = async (startDate, endDate) => {
     }
 };
 
+export const getTotalRevenueToday = async () => {
+    try {
+        const query = `
+            SELECT SUM(TotalAmount) AS totalRevenue
+            FROM orders
+            WHERE DATE(OrderDate) = CURDATE()
+        `;
+        const [rows] = await connection.execute(query);
+        return rows[0];
+    } catch (error) {
+        console.error("Error fetching total revenue today:", error);
+        throw error;
+    }
+};
+
+
 // Lấy đơn hàng trong hôm nay
 export const getOrderToday = async () => {
     try {
         const query = `
-            SELECT * FROM orders
+            SELECT OrderID, OrderDate, TotalAmount, name, phonenumber, payment_method
+            FROM orders
             WHERE DATE(OrderDate) = CURDATE()
         `;
         const [rows] = await connection.execute(query);
@@ -62,18 +69,33 @@ export const getOrderToday = async () => {
     }
 };
 
+
 // Lấy số người dùng mới
-export const getNewUserCount = async (startDate, endDate) => {
+export const getNewUserCount = async () => {
     try {
         const query = `
             SELECT COUNT(*) AS newUsers
-            FROM users
-            WHERE role = 'customer' and CreatedAt BETWEEN ? AND ?
+            FROM users u
+            WHERE u.role = 'customer'
+            AND DATE(u.CreatedAt) = CURDATE()
+            AND EXISTS (
+                SELECT 1
+                FROM orders o
+                WHERE o.UserID = u.UserID
+                AND DATE(o.OrderDate) = CURDATE()
+                AND (
+                    SELECT MIN(OrderDate)
+                    FROM orders
+                    WHERE UserID = u.UserID
+                ) = o.OrderDate
+            )
         `;
-        const [rows] = await connection.execute(query, [startDate, endDate]);
+        const [rows] = await connection.execute(query);
         return rows[0];
     } catch (error) {
-        console.error("Error fetching new user count:", error);
+        console.error("Lỗi khi lấy khách hàng mới trong ngày:", error);
         throw error;
     }
 };
+
+
