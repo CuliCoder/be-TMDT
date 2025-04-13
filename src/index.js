@@ -17,6 +17,7 @@ import brand_route from "./routes/brandRoute.js";
 import catagory_route from "./routes/catagoryRoute.js";
 import address_route from "./routes/addressRoute.js";
 import cart_router from "./routes/cartRouter.js";
+import staticstic_route from "./routes/statisticRoute.js";
 import cron from "node-cron";
 import { cancelLateOrders } from "./services/cart.js";
 import { checkPaymentFromTransactions } from "./utils/cron.js";
@@ -62,6 +63,7 @@ app.use("/api/promotions", promotion_route);
 app.use("/categories", catagory_route);
 app.use("/api/addressCustomer", address_route);
 app.use("/cart", cart_router);
+app.use("/api/statistics", staticstic_route);
 cron.schedule("*/1 * * * *", async () => {
   try {
     console.log(await checkPaymentFromTransactions());
