@@ -228,7 +228,7 @@ export const edit_product_item = (data, imagePath) =>
   new Promise(async (resolve, reject) => {
     try {
       const [checkSKU] = await database.query(
-        `SELECT * FROM product_item WHERE sku = ? and id != ? and status = 1`,
+        `SELECT * FROM product_item WHERE sku = ? and id != ? and status != 0`,
         [data.sku, data.product_item_id]
       );
       if (checkSKU.length !== 0) {
@@ -237,30 +237,73 @@ export const edit_product_item = (data, imagePath) =>
           message: "SKU đã tồn tại",
         });
       }
-      const [product] = await database.query(
-        imagePath
-          ? `UPDATE product_item SET sku = ?, product_image = ?, description = ?, profit_margin = ? WHERE id = ?`
-          : `UPDATE product_item SET sku = ?, description = ?, profit_margin = ? WHERE id = ?`,
-        imagePath
-          ? [
-              data.sku,
-              "/products/" + imagePath.filename,
-              data.description,
-              data.profit_margin,
-              data.product_item_id,
-            ]
-          : [
-              data.sku,
-              data.description,
-              data.profit_margin,
-              data.product_item_id,
-            ]
+      const [checkProduct] = await database.query(
+        `SELECT * FROM product_item WHERE id = ? and status != 0`,
+        [data.product_item_id]
       );
-      if (product.affectedRows === 0) {
+      if (checkProduct.length === 0) {
         return resolve({
           error: 1,
-          message: "Cập nhật sản phẩm thất bại 1",
+          message: "Không tìm thấy sản phẩm",
         });
+      }
+      if (checkProduct[0].price == 0) {
+        const [product] = await database.query(
+          imagePath
+            ? `UPDATE product_item SET sku = ?, product_image = ?, description = ?, profit_margin = ? WHERE id = ?`
+            : `UPDATE product_item SET sku = ?, description = ?, profit_margin = ? WHERE id = ?`,
+          imagePath
+            ? [
+                data.sku,
+                "/products/" + imagePath.filename,
+                data.description,
+                data.profit_margin,
+                data.product_item_id,
+              ]
+            : [
+                data.sku,
+                data.description,
+                data.profit_margin,
+                data.product_item_id,
+              ]
+        );
+        if (product.affectedRows === 0) {
+          return resolve({
+            error: 1,
+            message: "Cập nhật sản phẩm thất bại 1",
+          });
+        }
+      } else {
+        const priceOrigin =
+          checkProduct[0].price / (1 + checkProduct[0].profit_margin / 100);
+        const price = priceOrigin * (1 + data.profit_margin / 100);
+        const [product] = await database.query(
+          imagePath
+            ? `UPDATE product_item SET sku = ?, product_image = ?, description = ?, profit_margin = ?, price = ? WHERE id = ?`
+            : `UPDATE product_item SET sku = ?, description = ?, profit_margin = ?, price = ? WHERE id = ?`,
+          imagePath
+            ? [
+                data.sku,
+                "/products/" + imagePath.filename,
+                data.description,
+                data.profit_margin,
+                price,
+                data.product_item_id,
+              ]
+            : [
+                data.sku,
+                data.description,
+                data.profit_margin,
+                price,
+                data.product_item_id,
+              ]
+        );
+        if (product.affectedRows === 0) {
+          return resolve({
+            error: 1,
+            message: "Cập nhật sản phẩm thất bại 1",
+          });
+        }
       }
       const product_item_id = data.product_item_id;
       const variants = JSON.parse(data.variants);

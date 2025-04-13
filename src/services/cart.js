@@ -128,12 +128,11 @@ HAVING COUNT(*) = (
         });
       }
       const [products] = await client.execute(
-        `SELECT pi.id , p.ProductName, pi.price, c.Quantity, pi.product_image, pr.DiscountRate
+        `SELECT pi.id , p.ProductName, pi.price, pi.reserved_stock, c.Quantity, pi.product_image, pr.DiscountRate
       FROM cart as c join product_item as pi on c.Product_Item_ID = pi.id join products as p on pi.product_id = p.ProductID
       left join productpromotions as pp on p.ProductID = pp.ProductID
       left join promotions as pr on pp.PromotionID = pr.PromotionID
-      where c.UserID = ?
-      order by c.AddedDate desc`,
+      where c.UserID = ?`,
         [userID]
       );
       let totalPrice = 0;
@@ -188,9 +187,11 @@ HAVING COUNT(*) = (
         });
       }
       products.forEach(async (product) => {
+        const reserved_stock = product.reserved_stock + product.Quantity;
+        console.log(reserved_stock)
         const [update_reserved_stock] = await client.execute(
-          `update product_item set reserved_stock = reserved_stock + ? where id = ?`,
-          [product.Quantity, product.id]
+          `update product_item set reserved_stock = ? where id = ?`,
+          [reserved_stock, product.id]
         );
         if (update_reserved_stock.affectedRows === 0) {
           await client.rollback();
@@ -200,34 +201,6 @@ HAVING COUNT(*) = (
           });
         }
       });
-
-      // const sql_update_product = `UPDATE product_item pi set pi.qty_in_stock = case ${products
-      //   .map(
-      //     (product) =>
-      //       ` when id = ${product.id} then pi.qty_in_stock - ${product.Quantity} `
-      //   )
-      //   .join(" ")} end where pi.id in (${products
-      //   .map((product) => product.id)
-      //   .join(",")})`;
-      // const [updateProduct] = await connection.execute(sql_update_product);
-      // if (updateProduct.affectedRows === 0) {
-      //   await client.rollback();
-      //   return resolve({
-      //     error: 1,
-      //     message: "Có lỗi xảy ra trong quá trình đặt hàng",
-      //   });
-      // }
-      // const [deleteCart] = await connection.execute(
-      //   `DELETE FROM cart WHERE UserID = ?`,
-      //   [userID]
-      // );
-      // if (deleteCart.affectedRows === 0) {
-      //   await client.rollback();
-      //   return resolve({
-      //     error: 1,
-      //     message: "Có lỗi xảy ra trong quá trình đặt hàng",
-      //   });
-      // }
       await client.commit();
       resolve({
         error: addOrder.affectedRows === 0 ? 1 : 0,
@@ -285,7 +258,88 @@ export const cancelOrder = (orderID) =>
       orderDetails.forEach(async (product) => {
         const [update_reserved_stock] = await client.execute(
           `update product_item set reserved_stock = reserved_stock - ? where id = ?`,
-          [product.Quantity, product.Product_Item_ID]
+          [parseInt(product.Quantity), product.Product_Item_ID]
+        );
+        if (update_reserved_stock.affectedRows === 0) {
+          await client.rollback();
+          return resolve({
+            error: 1,
+            message: "Có lỗi xảy ra trong quá trình hủy đơn hàng",
+          });
+        }
+      });
+      const [updateOrder] = await client.execute(
+        `UPDATE orders SET Status = 'Hủy' WHERE OrderID = ?`,
+        [orderID]
+      );
+      if (updateOrder.affectedRows === 0) {
+        await client.rollback();
+        return resolve({
+          error: 1,
+          message: "Có lỗi xảy ra trong quá trình hủy đơn hàng",
+        });
+      }
+      const [update_status_order] = await client.execute(
+        `insert into order_status (idorder,status) VALUES (?, 'Hủy')`,
+        [orderID]
+      );
+      if (update_status_order.affectedRows === 0) {
+        await client.rollback();
+        return resolve({
+          error: 1,
+          message: "Có lỗi xảy ra trong quá trình hủy đơn hàng",
+        });
+      }
+      await client.commit();
+      resolve({
+        error: 0,
+        message: "Hủy đơn hàng thành công",
+      });
+    } catch (error) {
+      console.error(error);
+      if (client) {
+        await client.rollback();
+      }
+      reject({
+        error: 1,
+        message: error,
+      });
+    } finally {
+      if (client) {
+        client.release();
+      }
+    }
+  });
+export const cancelOrderByAd = (orderID) =>
+  new Promise(async (resolve, reject) => {
+    let client;
+    try {
+      client = await connection.getConnection();
+      await client.beginTransaction();
+      const [checkOrder] = await client.execute(
+        `SELECT * FROM orders WHERE OrderID = ? and payment_status = 'Chưa thanh toán'`,
+        [orderID]
+      );
+      if (checkOrder.length === 0) {
+        return resolve({
+          error: 1,
+          message: "Đơn hàng không tồn tại hoặc đã thanh toán",
+        });
+      }
+      const [orderDetails] = await client.execute(
+        `SELECT * FROM orderdetails WHERE OrderID = ?`,
+        [orderID]
+      );
+      if (orderDetails.length === 0) {
+        return resolve({
+          error: 1,
+          message: "Đơn hàng không tồn tại",
+        });
+      }
+      orderDetails.forEach(async (product) => {
+        const [update_reserved_stock] = await client.execute(
+          `update product_item set reserved_stock = reserved_stock - ? where id = ?`,
+          [parseInt(product.Quantity), product.Product_Item_ID]
         );
         if (update_reserved_stock.affectedRows === 0) {
           await client.rollback();
@@ -356,7 +410,11 @@ export const confirmPayment = (orderID) =>
       orderDetails.forEach(async (product) => {
         const [update_reserved_stock] = await client.execute(
           `update product_item set reserved_stock = reserved_stock - ?, qty_in_stock = qty_in_stock - ? where id = ?`,
-          [product.Quantity, product.Quantity, product.Product_Item_ID]
+          [
+            parseInt(product.Quantity),
+            parseInt(product.Quantity),
+            product.Product_Item_ID,
+          ]
         );
         if (update_reserved_stock.affectedRows === 0) {
           await client.rollback();
@@ -378,10 +436,21 @@ export const confirmPayment = (orderID) =>
         });
       }
       const [updateOrder] = await client.execute(
-        `UPDATE orders SET payment_status = 'Đã thanh toán' WHERE OrderID = ?`,
+        `UPDATE orders SET payment_status = 'Đã thanh toán', Status = 'Đã giao' WHERE OrderID = ?`,
         [orderID]
       );
       if (updateOrder.affectedRows === 0) {
+        await client.rollback();
+        return resolve({
+          error: 1,
+          message: "Có lỗi xảy ra trong quá trình xác nhận thanh toán",
+        });
+      }
+      const [update_status_order] = await client.execute(
+        `insert into order_status (idorder,status) VALUES (?, 'Đã giao')`,
+        [orderID]
+      );
+      if (update_status_order.affectedRows === 0) {
         await client.rollback();
         return resolve({
           error: 1,
@@ -415,7 +484,7 @@ export const cancelLateOrders = () =>
       client = await connection.getConnection();
       await client.beginTransaction();
       const [order] = await client.execute(
-        `SELECT * FROM orders WHERE payment_method = 'bank' and payment_status = 'Chưa thanh toán' and OrderDate < NOW() - INTERVAL 30 MINUTE`
+        `SELECT * FROM orders WHERE payment_method = 'bank' and payment_status = 'Chưa thanh toán' and Status <> 'Quá hạn thanh toán' and OrderDate < NOW() - INTERVAL 30 MINUTE`
       );
       if (order.length === 0) {
         return resolve({
@@ -473,7 +542,7 @@ export const cancelLateOrders = () =>
       await client.commit();
       resolve({
         error: 0,
-        message: "Hủy đơn hàng thành công",
+        message: "Hủy đơn hàng thành công " ,
       });
     } catch (error) {
       console.error(error);
