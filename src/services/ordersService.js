@@ -41,7 +41,7 @@ export const getOrderByID = async (OrderID) => {
 
 export const getOrderByUserID = async (UserID) => {
   try {
-    const query = `SELECT * FROM orders WHERE UserID = ?`;
+    const query = `SELECT * FROM orders WHERE UserID = ? order by OrderDate DESC`;
     UserID = Number(UserID);
     const [result] = await database.execute(query, [UserID]);
     return result;
