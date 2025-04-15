@@ -15,11 +15,13 @@ export const get_product_item_by_ID = (id) =>
   new Promise(async (resolve, reject) => {
     try {
       const [product] = await database.query(
-        `SELECT it.*, opt.variationID AS variantID, va.VariantName AS variantName,
+        `SELECT it.*, pr.ProductName as Name, opt.variationID AS variantID, va.VariantName AS variantName,
 opt.value FROM product_item AS it JOIN product_configuration AS con 
 ON it.id = con.product_item_id
 JOIN variation_opt AS opt 
 ON con.variation_option_id = opt.id
+JOIN products AS pr
+ON it.product_id = pr.ProductID
 JOIN variation AS va 
 ON opt.variationID = va.VariantID
 LEFT JOIN productpromotions AS pp
@@ -36,6 +38,7 @@ WHERE it.id = ? AND it.status != 0`,
         });
       }
       let productResult = {
+        name: product[0].Name,
         id: product[0].id,
         product_id: product[0].product_id,
         sku: product[0].SKU,
@@ -137,11 +140,14 @@ export const get_product_item_all = () =>
   new Promise(async (resolve, reject) => {
     try {
       const [product] = await database.query(
-        `SELECT it.*, 
+        `SELECT it.*, pr.ProductName as Name,
       CONCAT('[', GROUP_CONCAT(CONCAT('{"variantName":"', va.VariantName, '","values":"', opt.value, '"}') SEPARATOR ','), ']') AS attributes
       FROM product_item as it join product_configuration as con 
       on it.id = con.product_item_id join variation_opt as opt 
-      on con.variation_option_id = opt.id join variation as va 
+      on con.variation_option_id = opt.id 
+      JOIN products AS pr
+      ON it.product_id = pr.ProductID
+      join variation as va 
       on opt.variationID = va.VariantID
       where it.status != 0
       group by it.id order by it.id desc;`

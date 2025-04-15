@@ -8,4 +8,5 @@ od_Route.get("/user/:id", od.getOrderByUserID)
 od_Route.post("/", od.addOrder)
 od_Route.put("/", od.updateOrderStatus)
 od_Route.get("/status/:id", od.checkOrderStatus)
+od_Route.get("/time_status/:id", od.getStatus)
 export default od_Route;

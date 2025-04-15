@@ -79,15 +79,15 @@ export const placeOrder = async (req, res) => {
     });
   }
 };
-// export const cancelOrder = async (req, res) => {
-//   try {
-//     const orderID = req.params.orderID;
-//     const result = await cartService.cancelOrder(orderID);
-//     return res.status(200).json(result);
-//   } catch (error) {
-//     return res.status(500).json({
-//       error: 1,
-//       message: "Lỗi server",
-//     });
-//   }
-// }
+export const cancelOrder = async (req, res) => {
+  try {
+    const orderID = req.params.orderID;
+    const result = await cartService.cancelOrder(orderID);
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      error: 1,
+      message: "Lỗi server",
+    });
+  }
+}
