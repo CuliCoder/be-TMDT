@@ -596,7 +596,7 @@ export const get_product_display = () =>
     try {
       // Truy vấn dữ liệu thô từ cơ sở dữ liệu
       const [rows] = await database.query(
-        `SELECT it.*, pr.ProductName, CASE 
+        `SELECT it.*, pr.ProductName, pr.category_id, CASE 
          WHEN pro.StartDate <= NOW() AND pro.EndDate >= NOW() THEN pro.DiscountRate
          ELSE NULL
        END AS DiscountRate,
