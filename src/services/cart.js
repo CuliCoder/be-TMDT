@@ -3,7 +3,10 @@ export const getCart = (userID) =>
   new Promise(async (resolve, reject) => {
     try {
       const query = `
-      SELECT pi.id , p.ProductName, pi.price, c.Quantity, pi.product_image, pr.DiscountRate
+      SELECT pi.id , p.ProductName, pi.price, c.Quantity, pi.product_image, CASE 
+         WHEN pr.StartDate <= NOW() AND pr.EndDate >= NOW() THEN pr.DiscountRate
+         ELSE NULL
+       END AS DiscountRate
       FROM cart as c join product_item as pi on c.Product_Item_ID = pi.id join products as p on pi.product_id = p.ProductID
       left join productpromotions as pp on p.ProductID = pp.ProductID
       left join promotions as pr on pp.PromotionID = pr.PromotionID
@@ -25,28 +28,43 @@ export const addToCart = (userID, Product_Item_ID, quantity) =>
         [userID, Product_Item_ID]
       );
       if (existingProduct[0].length === 0) {
-        await connection.execute(
+        const [insert] = await connection.execute(
           `INSERT INTO cart (UserID, Product_Item_ID, Quantity) VALUES (?, ?, ?)`,
           [userID, Product_Item_ID, quantity]
         );
+        if (insert.affectedRows === 0) {
+          return resolve({
+            error: 1,
+            message: "Có lỗi xảy ra trong quá trình thêm sản phẩm vào giỏ hàng",
+          });
+        }
       } else {
-        await connection.execute(
+        const [update] = await connection.execute(
           `UPDATE cart SET Quantity = Quantity + ? WHERE UserID = ? AND Product_Item_ID = ?`,
           [quantity, userID, Product_Item_ID]
         );
+        if (update.affectedRows === 0) {
+          return resolve({
+            error: 1,
+            message: "Có lỗi xảy ra trong quá trình thêm sản phẩm vào giỏ hàng",
+          });
+        }
       }
-      resolve({
+      return resolve({
         error: 0,
         message: "Thêm sản phẩm vào giỏ hàng thành công",
       });
     } catch (error) {
-      reject(error);
+      reject({
+        error: 1,
+        message: "Có lỗi xảy ra trong quá trình thêm sản phẩm vào giỏ hàng",
+      });
     }
   });
 export const updateCart = (userID, productID, quantity) =>
   new Promise(async (resolve, reject) => {
     try {
-      await connection.execute(
+      const [update] = await connection.execute(
         `UPDATE cart SET Quantity = ? WHERE UserID = ? AND Product_item_ID = ?`,
         [quantity, userID, productID]
       );
@@ -54,13 +72,19 @@ export const updateCart = (userID, productID, quantity) =>
       //   `SELECT Quantity FROM cart WHERE UserID = ? AND ProductID = ?`,
       //   [userID, productID]
       // );
-      resolve({
-        error: 0,
-        message: "Cập nhật giỏ hàng thành công",
+      return resolve({
+        error: update.affectedRows === 0 ? 1 : 0,
+        message:
+          update.affectedRows === 0
+            ? "Có lỗi xảy ra trong quá trình cập nhật giỏ hàng"
+            : "Cập nhật giỏ hàng thành công",
         // quantity: updatedCart[0].Quantity
       });
     } catch (error) {
-      reject(error);
+      reject({
+        error: 1,
+        message: "Có lỗi xảy ra trong quá trình cập nhật giỏ hàng",
+      });
     }
   });
 export const removeFromCart = (userID, product_item_ID) =>
@@ -188,7 +212,7 @@ HAVING COUNT(*) = (
       }
       products.forEach(async (product) => {
         const reserved_stock = product.reserved_stock + product.Quantity;
-        console.log(reserved_stock)
+        console.log(reserved_stock);
         const [update_reserved_stock] = await client.execute(
           `update product_item set reserved_stock = ? where id = ?`,
           [reserved_stock, product.id]
@@ -538,17 +562,15 @@ export const cancelLateOrders = () =>
             message: "Có lỗi xảy ra trong quá trình hủy đơn hàng",
           });
         }
+        await client.commit();
       }
-      await client.commit();
       resolve({
         error: 0,
-        message: "Hủy đơn hàng thành công " ,
+        message: "Hủy đơn hàng thành công ",
       });
     } catch (error) {
       console.error(error);
-      if (client) {
-        await client.rollback();
-      }
+      await client.rollback();
       reject({
         error: 1,
         message: error,
