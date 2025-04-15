@@ -133,4 +133,21 @@ export const checkOrderStatus = (OrderID) =>
         message: "Lỗi server",
       });
     }
-  });
+})
+export const getStatus = (OrderID) => new Promise(async (resolve, reject) => {
+    try {
+        const query = `SELECT * FROM order_status WHERE idorder = ? ORDER BY UpdatedAt DESC`;
+        const [result] = await database.execute(query, [OrderID]);
+        if (result.length === 0) {
+            return resolve(null); // Không tìm thấy đơn hàng
+        }
+        const order = result;
+        resolve(order);
+    } catch (error) {
+        console.error("Error checking order status:", error);
+        reject({
+            error: 1,
+            message: "Lỗi server",
+        });
+    }
+})

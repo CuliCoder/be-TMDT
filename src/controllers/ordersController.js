@@ -87,13 +87,22 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 export const checkOrderStatus = async (req, res) => {
-  try {
-    const OrderID = req.params.id;
-    const result = await od.checkOrderStatus(OrderID);
-    return res.status(200).json(result);
-  } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Lấy trạng thái đơn hàng thất bại" });
-  }
-};
+
+    try {
+        const OrderID = req.params.id;
+        const result = await od.checkOrderStatus(OrderID);
+        return res.status(200).json(result)
+    } catch (error) {
+        return res.status(500).json({ message: 'Lấy trạng thái đơn hàng thất bại'})
+    }
+}
+export const getStatus = async (req, res) => {
+    try {
+        const OrderID = req.params.id;
+        const result = await od.getStatus(OrderID)
+        return res.status(200).json(result)
+    } catch (error) {
+        return res.status(500).json({ message: 'Lấy trạng thái đơn hàng thất bại'})
+    }
+}
+
