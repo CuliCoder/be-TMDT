@@ -58,10 +58,10 @@ WHERE it.id = ? AND it.status != 0`,
           values: product.value,
         });
       });
-      resolve(productResult);
+      return resolve(productResult);
     } catch (error) {
       console.log(error);
-      reject(error);
+      return reject(error);
     }
   });
 export const get_product_item_by_productID = (id) =>
@@ -122,14 +122,14 @@ export const get_product_item_by_productID = (id) =>
           values: row.value,
         });
       });
-      resolve({
+      return resolve({
         error: 0,
         message: "Lấy danh sách sản phẩm thành công",
         data: products,
       });
     } catch (error) {
       console.log(error);
-      reject({
+      return reject({
         error: 1,
         message: "Lấy danh sách sản phẩm thất bại",
         error: error.message,
@@ -157,9 +157,9 @@ export const get_product_item_all = () =>
           product[i].attributes = JSON.parse(product[i].attributes);
         }
       }
-      resolve(product);
+      return resolve(product);
     } catch (error) {
-      reject(error);
+      return reject(error);
     }
   });
 export const add_product_item = (data, imagePath) =>
@@ -205,6 +205,12 @@ export const add_product_item = (data, imagePath) =>
             `INSERT INTO variation_opt (variationID, value) VALUES (?,?)`,
             [variants[i].idVariation, variants[i].value]
           );
+          if (insertVariation.affectedRows === 0) {
+            return resolve({
+              error: 1,
+              message: "Thêm biến thể sản phẩm thất bại",
+            });
+          }
           await database.query(
             `INSERT INTO product_configuration (product_item_id, variation_option_id) VALUES (?,?)`,
             [product_item_id, insertVariation.insertId]
@@ -216,14 +222,14 @@ export const add_product_item = (data, imagePath) =>
           [product_item_id, variation[0].id]
         );
       }
-      resolve({
+      return resolve({
         error: 0,
         message: "Thêm biến thể sản phẩm thành công",
         product_item_id: product_item_id,
       });
     } catch (error) {
       console.log(error);
-      reject({
+      return reject({
         error: 1,
         message: "Thêm biến thể sản phẩm thất bại",
         error: error.message,
@@ -493,11 +499,33 @@ export const delete_product_item = (id) =>
   });
 export const delete_product = (id) =>
   new Promise(async (resolve, reject) => {
+    let client;
     try {
-      const [delete_product] = await database.execute(
+      client = await database.getConnection();
+      await client.beginTransaction(); // Bắt đầu giao dịch
+      const [delete_product] = await client.execute(
         `update products set status = 0 where ProductID = ?`,
         [id]
       );
+      if (delete_product.affectedRows === 0) {
+        await client.rollback(); // Rollback nếu có lỗi
+        return resolve({
+          error: 1,
+          message: "Xóa sản phẩm thất bại",
+        });
+      }
+      const [delete_product_item] = await client.execute(
+        `update product_item set status = 0 where product_id = ?`,
+        [id]
+      );
+      if (delete_product_item.affectedRows === 0) {
+        await client.rollback(); // Rollback nếu có lỗi
+        return resolve({
+          error: 1,
+          message: "Xóa sản phẩm thất bại",
+        });
+      }
+      await client.commit(); // Commit giao dịch nếu không có lỗi
       resolve({
         error: delete_product.affectedRows === 0 ? 1 : 0,
         message:
@@ -506,11 +534,16 @@ export const delete_product = (id) =>
             : "Xóa sản phẩm thành công",
       });
     } catch (error) {
+      await client.rollback(); // Rollback nếu có lỗi
       reject({
         error: 1,
         message: "Xóa sản phẩm thất bại",
         error: error.message,
       });
+    } finally {
+      if (client) {
+        client.release(); // Giải phóng kết nối
+      }
     }
   });
 export const import_product = (data) =>

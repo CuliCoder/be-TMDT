@@ -125,29 +125,30 @@ export const checkOrderStatus = (OrderID) =>
         return resolve(null); // Không tìm thấy đơn hàng
       }
       const order = result[0];
-      resolve(order);
+      return resolve(order);
     } catch (error) {
       console.error("Error checking order status:", error);
-      reject({
+      return reject({
         error: 1,
         message: "Lỗi server",
       });
     }
-})
-export const getStatus = (OrderID) => new Promise(async (resolve, reject) => {
+  });
+export const getStatus = (OrderID) =>
+  new Promise(async (resolve, reject) => {
     try {
-        const query = `SELECT * FROM order_status WHERE idorder = ? ORDER BY UpdatedAt DESC`;
-        const [result] = await database.execute(query, [OrderID]);
-        if (result.length === 0) {
-            return resolve(null); // Không tìm thấy đơn hàng
-        }
-        const order = result;
-        resolve(order);
+      const query = `SELECT * FROM order_status WHERE idorder = ? ORDER BY UpdatedAt DESC`;
+      const [result] = await database.execute(query, [OrderID]);
+      if (result.length === 0) {
+        return resolve(null); // Không tìm thấy đơn hàng
+      }
+      const order = result;
+      return resolve(order);
     } catch (error) {
-        console.error("Error checking order status:", error);
-        reject({
-            error: 1,
-            message: "Lỗi server",
-        });
+      console.error("Error checking order status:", error);
+      return reject({
+        error: 1,
+        message: "Lỗi server",
+      });
     }
-})
+  });

@@ -360,19 +360,19 @@ export const cancelOrderByAd = (orderID) =>
           message: "Đơn hàng không tồn tại",
         });
       }
-      orderDetails.forEach(async (product) => {
+      for (const product of orderDetails) {
         const [update_reserved_stock] = await client.execute(
           `update product_item set reserved_stock = reserved_stock - ? where id = ?`,
-          [parseInt(product.Quantity), product.Product_Item_ID]
+          [product.Quantity, product.Product_Item_ID]
         );
         if (update_reserved_stock.affectedRows === 0) {
           await client.rollback();
           return resolve({
             error: 1,
-            message: "Có lỗi xảy ra trong quá trình hủy đơn hàng",
+            message: "Hủy đơn hàng không thành công",
           });
         }
-      });
+      }
       const [updateOrder] = await client.execute(
         `UPDATE orders SET Status = 'Hủy' WHERE OrderID = ?`,
         [orderID]
@@ -506,74 +506,97 @@ export const cancelLateOrders = () =>
     let client;
     try {
       client = await connection.getConnection();
-      await client.beginTransaction();
-      const [order] = await client.execute(
-        `SELECT * FROM orders WHERE payment_method = 'bank' and payment_status = 'Chưa thanh toán' and Status <> 'Quá hạn thanh toán' and OrderDate < NOW() - INTERVAL 30 MINUTE`
+
+      // Lấy danh sách các đơn hàng quá hạn
+      const [orders] = await client.execute(
+        `SELECT * FROM orders 
+           WHERE payment_method = 'bank' 
+             AND payment_status = 'Chưa thanh toán' 
+             AND Status <> 'Quá hạn thanh toán' 
+             AND OrderDate < NOW() - INTERVAL 30 MINUTE`
       );
-      if (order.length === 0) {
+
+      if (orders.length === 0) {
         return resolve({
           error: 1,
-          message: "Đơn hàng không tồn tại",
+          message: "Không có đơn hàng quá hạn",
         });
       }
-      for (let i = 0; i < order.length; i++) {
+
+      for (const order of orders) {
+        // Lấy chi tiết đơn hàng
         const [orderDetails] = await client.execute(
           `SELECT * FROM orderdetails WHERE OrderID = ?`,
-          [order[i].OrderID]
+          [order.OrderID]
         );
+
         if (orderDetails.length === 0) {
-          return resolve({
-            error: 1,
-            message: "Đơn hàng không tồn tại",
-          });
+          console.error(
+            `Không tìm thấy chi tiết đơn hàng cho OrderID: ${order.OrderID}`
+          );
+          continue; // Bỏ qua đơn hàng này và tiếp tục xử lý các đơn hàng khác
         }
-        orderDetails.forEach(async (product) => {
-          const [update_reserved_stock] = await client.execute(
-            `update product_item set reserved_stock = reserved_stock - ? where id = ?`,
+
+        // Cập nhật reserved_stock cho từng sản phẩm
+        for (const product of orderDetails) {
+          const [updateReservedStock] = await client.execute(
+            `UPDATE product_item 
+               SET reserved_stock = reserved_stock - ? 
+               WHERE id = ?`,
             [product.Quantity, product.Product_Item_ID]
           );
-          if (update_reserved_stock.affectedRows === 0) {
-            await client.rollback();
-            return resolve({
-              error: 1,
-              message: "Hủy đơn hàng không thành công",
-            });
+
+          if (updateReservedStock.affectedRows === 0) {
+            console.error(
+              `Không thể cập nhật reserved_stock cho Product_Item_ID: ${product.Product_Item_ID}`
+            );
+            continue; // Bỏ qua sản phẩm này và tiếp tục xử lý các sản phẩm khác
           }
-        });
+        }
+
+        // Cập nhật trạng thái đơn hàng
         const [updateOrder] = await client.execute(
-          `UPDATE orders SET Status = 'Quá hạn thanh toán' WHERE OrderID = ?`,
-          [order[i].OrderID]
+          `UPDATE orders 
+             SET Status = 'Quá hạn thanh toán' 
+             WHERE OrderID = ?`,
+          [order.OrderID]
         );
+
         if (updateOrder.affectedRows === 0) {
-          await client.rollback();
-          return resolve({
-            error: 1,
-            message: "Có lỗi xảy ra trong quá trình hủy đơn hàng",
-          });
+          console.error(
+            `Không thể cập nhật trạng thái cho OrderID: ${order.OrderID}`
+          );
+          continue; // Bỏ qua đơn hàng này và tiếp tục xử lý các đơn hàng khác
         }
-        const [update_status_order] = await client.execute(
-          `insert into order_status (idorder,status) VALUES (?, 'Quá hạn thanh toán')`,
-          [order[i].OrderID]
+
+        // Thêm trạng thái vào bảng order_status
+        const [insertOrderStatus] = await client.execute(
+          `INSERT INTO order_status (idorder, status) 
+             VALUES (?, 'Quá hạn thanh toán')`,
+          [order.OrderID]
         );
-        if (update_status_order.affectedRows === 0) {
-          await client.rollback();
-          return resolve({
-            error: 1,
-            message: "Có lỗi xảy ra trong quá trình hủy đơn hàng",
-          });
+
+        if (insertOrderStatus.affectedRows === 0) {
+          console.error(
+            `Không thể thêm trạng thái vào order_status cho OrderID: ${order.OrderID}`
+          );
+          continue; // Bỏ qua đơn hàng này và tiếp tục xử lý các đơn hàng khác
         }
-        await client.commit();
+
+        console.log(
+          `Đơn hàng ${order.OrderID} đã được cập nhật thành 'Quá hạn thanh toán'`
+        );
       }
+
       resolve({
         error: 0,
-        message: "Hủy đơn hàng thành công ",
+        message: "Hủy đơn hàng quá hạn thành công",
       });
     } catch (error) {
-      console.error(error);
-      await client.rollback();
+      console.error("Lỗi khi hủy đơn hàng quá hạn:", error);
       reject({
         error: 1,
-        message: error,
+        message: "Lỗi khi hủy đơn hàng quá hạn",
       });
     } finally {
       if (client) {
@@ -581,3 +604,118 @@ export const cancelLateOrders = () =>
       }
     }
   });
+// export const cancelLateOrders = () =>
+//   new Promise(async (resolve, reject) => {
+//     let client;
+//     try {
+//       client = await connection.getConnection();
+//       await client.beginTransaction();
+
+//       // Lấy danh sách các đơn hàng quá hạn
+//       const [orders] = await client.execute(
+//         `SELECT * FROM orders
+//          WHERE payment_method = 'bank'
+//            AND payment_status = 'Chưa thanh toán'
+//            AND Status <> 'Quá hạn thanh toán'
+//            AND OrderDate < NOW() - INTERVAL 30 MINUTE`
+//       );
+
+//       if (orders.length === 0) {
+//         return resolve({
+//           error: 1,
+//           message: "Không có đơn hàng quá hạn",
+//         });
+//       }
+
+//       for (const order of orders) {
+//         // Lấy chi tiết đơn hàng
+//         const [orderDetails] = await client.execute(
+//           `SELECT * FROM orderdetails WHERE OrderID = ?`,
+//           [order.OrderID]
+//         );
+
+//         if (orderDetails.length === 0) {
+//           console.error(`Không tìm thấy chi tiết đơn hàng cho OrderID: ${order.OrderID}`);
+//           await client.rollback();
+//           return reject({
+//             error: 1,
+//             message: `Không tìm thấy chi tiết đơn hàng cho OrderID: ${order.OrderID}`,
+//           });
+//         }
+
+//         // Cập nhật reserved_stock cho từng sản phẩm
+//         for (const product of orderDetails) {
+//           const [updateReservedStock] = await client.execute(
+//             `UPDATE product_item
+//              SET reserved_stock = reserved_stock - ?
+//              WHERE id = ?`,
+//             [product.Quantity, product.Product_Item_ID]
+//           );
+
+//           if (updateReservedStock.affectedRows === 0) {
+//             console.error(`Không thể cập nhật reserved_stock cho Product_Item_ID: ${product.Product_Item_ID}`);
+//             await client.rollback();
+//             return reject({
+//               error: 1,
+//               message: `Không thể cập nhật reserved_stock cho Product_Item_ID: ${product.Product_Item_ID}`,
+//             });
+//           }
+//         }
+
+//         // Cập nhật trạng thái đơn hàng
+//         const [updateOrder] = await client.execute(
+//           `UPDATE orders
+//            SET Status = 'Quá hạn thanh toán'
+//            WHERE OrderID = ?`,
+//           [order.OrderID]
+//         );
+
+//         if (updateOrder.affectedRows === 0) {
+//           console.error(`Không thể cập nhật trạng thái cho OrderID: ${order.OrderID}`);
+//           await client.rollback();
+//           return reject({
+//             error: 1,
+//             message: `Không thể cập nhật trạng thái cho OrderID: ${order.OrderID}`,
+//           });
+//         }
+
+//         // Thêm trạng thái vào bảng order_status
+//         const [insertOrderStatus] = await client.execute(
+//           `INSERT INTO order_status (idorder, status)
+//            VALUES (?, 'Quá hạn thanh toán')`,
+//           [order.OrderID]
+//         );
+
+//         if (insertOrderStatus.affectedRows === 0) {
+//           console.error(`Không thể thêm trạng thái vào order_status cho OrderID: ${order.OrderID}`);
+//           await client.rollback();
+//           return reject({
+//             error: 1,
+//             message: `Không thể thêm trạng thái vào order_status cho OrderID: ${order.OrderID}`,
+//           });
+//         }
+
+//         console.log(`Đơn hàng ${order.OrderID} đã được cập nhật thành 'Quá hạn thanh toán'`);
+//       }
+
+//       // Commit giao dịch sau khi hoàn tất
+//       await client.commit();
+//       resolve({
+//         error: 0,
+//         message: "Hủy đơn hàng quá hạn thành công",
+//       });
+//     } catch (error) {
+//       console.error("Lỗi khi hủy đơn hàng quá hạn:", error);
+//       if (client) {
+//         await client.rollback();
+//       }
+//       reject({
+//         error: 1,
+//         message: "Lỗi khi hủy đơn hàng quá hạn",
+//       });
+//     } finally {
+//       if (client) {
+//         client.release();
+//       }
+//     }
+//   });

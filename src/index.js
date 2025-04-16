@@ -64,12 +64,27 @@ app.use("/categories", catagory_route);
 app.use("/api/addressCustomer", address_route);
 app.use("/cart", cart_router);
 app.use("/api/statistics", staticstic_route);
+let isRunning = false;
+
 cron.schedule("*/1 * * * *", async () => {
+  if (isRunning) {
+    console.log("Cron job is already running. Skipping this execution.");
+    return;
+  }
+
+  isRunning = true;
   try {
-    console.log(await checkPaymentFromTransactions());
-    console.log(await cancelLateOrders());
+    console.log("Bắt đầu kiểm tra thanh toán...");
+    const paymentResult = await checkPaymentFromTransactions();
+    console.log(paymentResult);
+
+    console.log("Bắt đầu hủy đơn hàng quá hạn...");
+    const cancelResult = await cancelLateOrders();
+    console.log(cancelResult);
   } catch (error) {
-    console.error("Lỗi khi kiểm tra đơn hàng thanh toán:", error);
+    console.error("Lỗi khi chạy cron job:", error);
+  } finally {
+    isRunning = false;
   }
 });
 app.listen(3000, () => {
