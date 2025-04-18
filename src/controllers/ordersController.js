@@ -105,4 +105,3 @@ export const getStatus = async (req, res) => {
         return res.status(500).json({ message: 'Lấy trạng thái đơn hàng thất bại'})
     }
 }
-
